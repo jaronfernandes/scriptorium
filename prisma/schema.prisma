@@ -8,26 +8,69 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// placed here just to set up prisma stuff and to remember syntax, feel free to delete.
-model Author {
-  id Int @id @default(autoincrement())
-  firstName String
-  lastName String
-  bio String?
-  books Book[]
-}
-
-model Book {
-  id Int  @id @default(autoincrement())
-  title String
-  isbn String  @unique
-  publishedDate DateTime 
-  available Boolean  @default(true)
-  authorId Int 
-  author Author @relation(fields: [authorId], references: [id])
-}
-
 datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
+}
+
+// NOTE: For User, role can take the following values: 
+// VISITOR
+// USER
+// ADMIN // Shortform for: System administrator
+
+// User schema
+model User {
+  id          Int       @id @default(autoincrement())
+  firstName   String                                     
+  lastName    String                                     
+  email       String    @unique // ASSUME: emails need to be unique
+  phoneNumber String                                     
+  password    String                                    
+  role        String    @default("VISITOR")  // ASSUME: Users are given the role with the lowest permissions (VISITOR)
+  // Defining the one to many relationships
+  blogPosts   BlogPost[] 
+  comments    Comment[] 
+}
+
+// Blog Post schema 
+// TODO: Do we need a createdAt attribute?
+// TODO: Is the onDelete used properly here? (Ie: If user is deleted, their corresponding blog posts should be too)
+model BlogPost {
+  id        Int       @id @default(autoincrement())
+  title     String
+  content   String
+  authorId  Int // Foreign key to User
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  hidden    Boolean   @default(false) // Indicates if content is hidden
+  // Defining the one to many relationships
+  reports   Report[]
+  comments  Comment[] // One-to-many relation with comments
+}
+
+// Comment schema 
+// TODO: Is the onDelete used properly here? (Ie: If user or post is deleted, the comment should be deleted too)
+model Comment {
+  id        Int       @id @default(autoincrement())
+  text     String
+  authorId  Int // Foreign key to User
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  postId    Int  // Foreign key to BlogPost
+  post      BlogPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  hidden    Boolean   @default(false) // Indicates if content is hidden
+  // Defining the one to many relationships
+  reports   Report[]  // allowing comments to have multiple reports
+}
+
+// Report schema
+// TODO: Are the optional foerign keys formatted properly
+// TODO: Is the onDelete used properly here? (Ie: If the reported blog post or comment is deleted, so should the report?)
+model Report {
+  id        Int       @id @default(autoincrement())
+  contentType  String   // Either "BlogPost" or "Comment"
+  explanation  String
+  blogPostId    Int?      // Foreign key to BlogPost
+  commentId     Int?      // Foreign key to Comment
+  // Optional foreign keys (reports can be filed for either posts or comments)
+  blogPost  BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
 }

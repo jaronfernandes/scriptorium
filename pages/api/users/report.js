@@ -6,17 +6,6 @@
     Overall purpose of the file: Creates an endpoint that takes user info fron req.body and makes a new report entry in prisma
 */
 
-// NOTE: Commented out code
-// After user token creation is completed, all code should be nested in the adminCheck if statement
-// Verify user access 
-// const userCheck = verifyUser(req, res);
-  
-// If adminCheck returns true, proceed with the response
-// if (adminCheck === true) {
-//     return res.status(200).json({ message: "Hi there, Admin!" });
- // }
-
-
 // Imports 
 import prisma from "../../../utils/db"; 
 import { verifyUser, verifyAdmin} from "../../../utils/verification";

@@ -14,7 +14,7 @@ import { verifyAdmin} from "../../../utils/verification";
 
 // Handler
 export default async function handler (req, res){
-    // Verify if it's a system who is trying to access
+    // Verify if it's a system admin who is trying to access
     // TODO: Commented out for now since unsure about implementation
     // const isAdmin = verifyAdmin(req, res);
     // if (!isAdmin){

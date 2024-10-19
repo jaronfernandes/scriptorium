@@ -44,16 +44,44 @@ export default async function handler (req, res){
     if (contentType === "BlogPost" && !blogPostId) {
         return res.status(400).json({ error: "Content type is Blog Post, but missing Blog Post Id" });
     } 
-    
     if (contentType === "Comment" && !commentId) {
         return res.status(400).json({ error: "Content type is Comment, but missing Comment Id" });
     } 
 
+    // Try block #1:
+    // Validating whether blogPostId / commentId are valid
+    try {
+        if (contentType === "BlogPost"){
+            const searchCondition = {id: blogPostId};
+            const blogPostInstance = await prisma.blogPost.findUnique({
+                where: searchCondition
+            });
+            if (!blogPostInstance){
+                return res.status(404).json({ error: "Blog Post not found" });
+            }
+        } else if (contentType === "Comment"){
+            const searchCondition = {id: commentId};
+            const commentInstance = await prisma.comment.findUnique({
+                where: searchCondition
+            });
+            if (!commentInstance){
+                return res.status(404).json({ error: "Comment not found" });
+            }
+        }
+
+    } catch (error) {
+        // console.error("Error validating content ids:", error); // For debugging purposes
+        return res.status(500).json({ error: "Failed to validate content ids" });
+    }
+
+
+    // Try block #2: 
     // Attempt to create the new report field
     try {
         let newReport;
+        let data;
         if (contentType === "BlogPost"){
-            const data = {
+            data = {
                 contentType,
                 explanation,
                 blogPost: {
@@ -61,11 +89,8 @@ export default async function handler (req, res){
                 },
                 //Omitting comment
             }
-            newReport = await prisma.report.create({
-                data
-            });
-        } else { //Assume here that contentType === "Comment"
-            const data = {
+        } else if (contentType === "Comment") { //Assume here that contentType === "Comment"
+            data = {
                 contentType,
                 explanation,
                 //Omitting blogPost
@@ -73,10 +98,10 @@ export default async function handler (req, res){
                     connect: { id: commentId }, // Establish the relationship with the Blog Post instance. 
                 },
             }
-            newReport = await prisma.report.create({
-                data
-            });
         }
+        newReport = await prisma.report.create({
+            data
+        });
         // Return the created author
         return res.status(201).json(newReport); // 201 status for successful creation
       } catch (error) {

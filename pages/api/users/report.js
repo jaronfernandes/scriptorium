@@ -24,8 +24,15 @@ import { verifyAdmin } from "../../../utils/verification";
 //Handler 
 export default async function handler (req, res){
 
+    // Verify if it's a user (or system admin) who is trying to access
+    // TODO: Commented out for now since unsure about implementation
+    // const isUser = verifyAdmin(req, res);
+    // if (!isUser){
+    //     return; // JSON response already handled under the case where we have a visitor trying to access
+    // }
+
     // Checking if request type is correct
-    if (req.method != "POST"){
+    if (req.method !== "POST"){
         return res.status(405).json({error: "Method not supported"});
     }
 

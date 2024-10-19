@@ -13,13 +13,13 @@ import { verifyUser, verifyAdmin} from "../../../utils/verification";
 //Handler 
 export default async function handler (req, res){
 
-    // Verify if it's a user (or system admin) who is trying to access
-    // TODO: Commented out for now since unsure about implementation
-    const isUser = verifyUser(req, res);
-    const isAdmin = verifyAdmin(req, res);
-    if (!isUser && !isAdmin){
-        return; // JSON response already handled under the case where we have a visitor trying to access
-    }
+    // // Verify if it's a user (or system admin) who is trying to access
+    // // TODO: Commented out for now since unsure about implementation
+    // const isUser = verifyUser(req, res);
+    // const isAdmin = verifyAdmin(req, res);
+    // if (!isUser && !isAdmin){
+    //     return; // JSON response already handled under the case where we have a visitor trying to access
+    // }
 
     // Checking if request type is correct
     if (req.method !== "POST"){

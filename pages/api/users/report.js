@@ -3,7 +3,7 @@
     "As a user, I want to report an inappropriate blog post or comment 
     so that the website is purged of abusive content. I want to add additional explanation when submitting my report."
 
-    Overall purpose of the file: Creates an endpoint that takes user info fron req.body and makes a new report entry in prisma
+    Overall purpose of the file: Creates a POST endpoint that takes user info fron req.body and makes a new report entry in prisma
 */
 
 // Imports 

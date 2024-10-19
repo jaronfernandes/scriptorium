@@ -4,7 +4,7 @@
     This content would then be hidden from everyone, except for the author. 
     The author can still see the content (with a flag that indicates the reports), but cannot edit it."
 
-    Overall purpose of the file: Creates an endpoint that takes user info fron req.body and 
+    Overall purpose of the file: Creates a POST endpoint that takes user info fron req.body and 
     makes a piece of content (either a report or a comment) hidden
 */
 

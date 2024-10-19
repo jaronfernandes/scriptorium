@@ -80,8 +80,7 @@ export default async function handler (req, res){
         // Return the created author
         return res.status(201).json(newReport); // 201 status for successful creation
       } catch (error) {
-        // Handle error during report creation
-        console.error("Error creating report:", error); // Log the error
+        // console.error("Error creating report:", error); // For debugging purposes
         return res.status(500).json({ error: "Failed to create report" });
     }
 }

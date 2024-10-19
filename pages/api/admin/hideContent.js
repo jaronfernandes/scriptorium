@@ -48,7 +48,7 @@ export default async function handler (req, res){
          return res.status(400).json({ error: "Content type is Comment, but missing Comment Id" });
     } 
 
-     // Try block #1:
+    // Try block #1:
     // Validating whether blogPostId / commentId are valid
     try {
         if (contentType === "BlogPost"){
@@ -72,6 +72,27 @@ export default async function handler (req, res){
     } catch (error) {
         // console.error("Error validating content ids:", error); // For debugging purposes
         return res.status(500).json({ error: "Failed to validate content ids" });
+    }
+
+    // Try block #2: Hiding the content
+    try {
+        let hiddenContent;
+        if (contentType === "BlogPost"){
+            hiddenContent = await prisma.blogPost.update({
+                where: { id: blogPostId },
+                data: { hidden: true },
+            });
+        } else if (contentType === "Comment"){
+            hiddenContent = await prisma.comment.update({
+                where: { id: commentId },
+                data: { hidden: true },
+            });
+        }
+        return res.status(200).json(hiddenContent);
+
+    } catch (error){
+        // console.error("Error hiding content:", error); // For debugging purposes
+        return res.status(500).json({ error: "Failed to hide content" });
     }
 
 }

@@ -5,6 +5,10 @@
 
     Overall purpose of the file: Creates an GET endpoint that takes user info fron req.query
     and sorts content.
+
+    TODO: Massive implementation assumption (permitted based on Piazza post @192). Assuming that the sorted page displays
+    both sorted blog posts and comment entries. In other words, there ISN'T a seperate sorted page for sorted blog posts ONLY or
+    sorted comments ONLY.
 */
 //Imports
 import prisma from "../../../utils/db"; 

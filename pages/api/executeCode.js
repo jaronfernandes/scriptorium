@@ -50,7 +50,7 @@ export default async function handler(req, res){
 
     //Trying to execute the code
     try {
-        const codeOutput = executeCodeHelper(inputCode, language, userInput);
+        const codeOutput = await executeCodeHelper(inputCode, language, userInput);
         res.status(200).json({ codeOutput }); //TODO: Might need to change this output format depending on implementation of executeCodeHelper
     } catch (error){
         // console.error("Error executing code:", error); // For debugging purposes

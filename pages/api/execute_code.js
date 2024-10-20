@@ -17,10 +17,11 @@
 */
 
 //Imports
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import fs from 'fs';
-import path from 'path';
+// import { exec } from 'child_process';
+// import { promisify } from 'util';
+// import fs from 'fs';
+// import path from 'path';
+import executeCode from '../utils/executeCode'; //TODO: Double check if import path is correct
 
 //Handler
 export default async function handler(req, res){
@@ -34,7 +35,7 @@ export default async function handler(req, res){
     const {inputCode, language, userInput} = req.body;
 
     // Define a set of supported languages
-    const setOfSupportedLanguages = new Set(["c", "c++", "java", "python", "javascript"])
+    const setOfSupportedLanguages = new Set(["c", "c++", "java", "python", "javascript"]);
 
     // Check if required fields are defined 
     // Here, assume required fields are: inputCode and language
@@ -45,6 +46,15 @@ export default async function handler(req, res){
     // Checking if the language is in setOfSupportedLanguages
     if (!setOfSupportedLanguages.has(language)){
         return res.status(400).json({message: "Unsupported language"});
+    }
+
+    //Trying to execute the code
+    try {
+        const codeOutput = executeCode(inputCode, language, userInput);
+        res.status(200).json({ codeOutput }); //TODO: Might need to change this output format depending on implementation of executeCode
+    } catch (error){
+        // console.error("Error executing code:", error); // For debugging purposes
+        return res.status(500).json({ error: "Failed to execute code" });
     }
     
 }

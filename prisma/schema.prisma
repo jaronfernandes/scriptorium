@@ -45,6 +45,7 @@ model BlogPost {
   hidden    Boolean   @default(false) // Indicates if content is hidden
   upvotes   Int       @default(0)
   downvotes Int       @default(0)
+  createdAt DateTime  @default(now())
   // Defining the one to many relationships
   reports   Report[]
   comments  Comment[] // One-to-many relation with comments
@@ -62,6 +63,7 @@ model Comment {
   hidden    Boolean   @default(false) // Indicates if content is hidden
   upvotes   Int       @default(0)
   downvotes Int       @default(0)
+  createdAt DateTime  @default(now())
   // Defining the one to many relationships
   reports   Report[]  // allowing comments to have multiple reports
 }

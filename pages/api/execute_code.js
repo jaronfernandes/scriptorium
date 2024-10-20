@@ -15,3 +15,28 @@
         - Did not put this in a nested folder (eg: user or admin) because this route is accessible to all (accesible to the lowest level, visitor)
 
 */
+
+//Imports
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import fs from 'fs';
+import path from 'path';
+
+//Handler
+export default async function handler(req, res){
+
+    // Checking if request type is correct
+    if (req.method != "POST"){
+        return res.status(405).json({error: "Method not supported"});
+    }
+
+    // Get POST body content
+    const {inputCode, language, userInput} = req.body;
+
+    // Check if required fields are defined 
+    // Here, assume required fields are: inputCode and language
+    if (!inputCode || !language){
+        return res.status(400).json({message: "Missing input code or language"});
+    }
+    
+}

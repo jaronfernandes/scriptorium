@@ -33,10 +33,18 @@ export default async function handler(req, res){
     // Get POST body content
     const {inputCode, language, userInput} = req.body;
 
+    // Define a set of supported languages
+    const setOfSupportedLanguages = new Set(["c", "c++", "java", "python", "javascript"])
+
     // Check if required fields are defined 
     // Here, assume required fields are: inputCode and language
     if (!inputCode || !language){
         return res.status(400).json({message: "Missing input code or language"});
+    }
+
+    // Checking if the language is in setOfSupportedLanguages
+    if (!setOfSupportedLanguages.has(language)){
+        return res.status(400).json({message: "Unsupported language"});
     }
     
 }

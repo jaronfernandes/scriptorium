@@ -21,7 +21,7 @@
 // import { promisify } from 'util';
 // import fs from 'fs';
 // import path from 'path';
-import executeCodeHelper from '../utils/executeCodeHelper'; //TODO: Double check if import path is correct
+import executeCodeHelper from '../../utils/executeCodeHelper'; //TODO: Double check if import path is correct
 
 //Handler
 export default async function handler(req, res){

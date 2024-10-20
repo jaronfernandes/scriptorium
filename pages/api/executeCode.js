@@ -21,7 +21,7 @@
 // import { promisify } from 'util';
 // import fs from 'fs';
 // import path from 'path';
-import executeCode from '../utils/executeCode'; //TODO: Double check if import path is correct
+import executeCodeHelper from '../utils/executeCodeHelper'; //TODO: Double check if import path is correct
 
 //Handler
 export default async function handler(req, res){
@@ -50,8 +50,8 @@ export default async function handler(req, res){
 
     //Trying to execute the code
     try {
-        const codeOutput = executeCode(inputCode, language, userInput);
-        res.status(200).json({ codeOutput }); //TODO: Might need to change this output format depending on implementation of executeCode
+        const codeOutput = executeCodeHelper(inputCode, language, userInput);
+        res.status(200).json({ codeOutput }); //TODO: Might need to change this output format depending on implementation of executeCodeHelper
     } catch (error){
         // console.error("Error executing code:", error); // For debugging purposes
         return res.status(500).json({ error: "Failed to execute code" });

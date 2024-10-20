@@ -35,13 +35,13 @@ export default async function handler (req, res){
     // Validating req.query entry
     // Check if required fields are defined
     // Using the ? operator in case either variable are undefined
-    if(!contentType?.trim() || (contentType !== "BlogPost" && contentType !== "Comment")){
-        return res.status(400).json({ error: "Missing required fields" });
+    if(!contentType?.trim()){
+        return res.status(400).json({ error: "Missing required fields: contentType" });
     }
 
     // Checking if contentType is neither of the intended types
     if(contentType !== "BlogPost" && contentType !== "Comment"){
-        return res.status(400).json({ error: "Missing required fields" });
+        return res.status(400).json({ error: "Invalid content type. Must be reporting either a BlogPost or Comment."});
     }
 
 

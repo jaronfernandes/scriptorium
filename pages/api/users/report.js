@@ -32,12 +32,12 @@ export default async function handler (req, res){
     // Check if required fields are defined
     // Using the ? operator in case either variable are undefined
     if(!contentType?.trim() || !explanation?.trim()){
-        return res.status(400).json({ error: "Missing required fields" });
+        return res.status(400).json({ error: "Missing either contentType or explanation (both are required)" });
     }
 
     // Check if contentType is neither of the accepted types 
     if (contentType !== "BlogPost" && contentType !== "Comment" ) {
-        return res.status(400).json({ error: "Invalid content type. Must be reporting either a 'BlogPost' or 'Comment'." });
+        return res.status(400).json({ error: "Invalid content type. Must be reporting either a BlogPost or Comment." });
     }
 
     // Check for mismatch between contentType and the ids

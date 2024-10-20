@@ -39,12 +39,18 @@ export default async function handler (req, res){
         return res.status(400).json({ error: "Missing required fields" });
     }
 
+    // Checking if contentType is neither of the intended types
+    if(contentType !== "BlogPost" && contentType !== "Comment"){
+        return res.status(400).json({ error: "Missing required fields" });
+    }
+
+
     // Try statement to retrieve all non-hidden blog posts AND all non-hidden comments
     try {
         // Defining common returned variable
         let retrievedContent = [];
         // Defining common search condition
-        const contentSearchCondition = {hidden:false}
+        const contentSearchCondition = {hidden:false};
 
         // Fetching all non-hidden blog posts
         if (contentType === "BlogPost"){
@@ -70,11 +76,19 @@ export default async function handler (req, res){
                 }
             });
         }
+
+        // Flatten output JSON object (to make sorting entries easier)
+        // See OneNote notes for sample format
+        let formattedContent = retrievedContent.map(({ _count, ...restOfContent}) => ({
+            ...restOfContent,
+            reportCount: _count.reports
+        }));
+
         // Sort the entries in descending order from having the most reports to having the least reports 
-        // TODO: How to do this?
+        formattedContent.sort((a,b) => (b.reportCount - a.reportCount));
         
         // Return the results
-        return res.status(200).json(retrievedContent);
+        return res.status(200).json(formattedContent);
     } catch (error) {
         // console.error("Error fetching and/or sorting content:", error); // For debugging purposes
         return res.status(500).json({ error: "Failed to fetch or sort content" });

@@ -1,14 +1,17 @@
 import prisma from '../../../../utils/db';
-import { verifyRefreshToken, generateRefreshToken } from '../../../../utils/auth';
+import { verifyAccessToken, generateRefreshToken } from '../../../../utils/auth';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ message: "Must be a POST request." });
     }
 
-    const { title, explanation, tags, code, refreshToken } = req.body;
+    /**
+     * Assume: title: Sring, explanation: String, tags: String[], code: String, refreshToken: String
+     */
+    const { title, explanation, tags, code, accessToken } = req.body;
 
-    const verified_token = verifyToken(refreshToken);
+    const verified_token = verifyAccessToken(accessToken);
 
     if (!verified_token) {
         return res.status(401).json({ error: "Invalid token" });
@@ -29,37 +32,50 @@ export default async function handler(req, res) {
     });
 
     try {
-        for (let i = 0; i < tags.length; i++) {
-            const findTag = await prisma.tag.findUnique({
-                where: {
-                    name: tags[i]
-                }
+        const newTags = []
+
+        for (let tagName of tags) {
+            let tag = await prisma.tag.findUnique({
+                where: { name: tagName }
             });
 
-            if (!findTag) {
-                const tag = await prisma.tag.create({
-                    data: {
-                        name: tags[i]
-                    }
+            if (!tag) {
+                tag = await prisma.tag.create({
+                    data: { name: tagName }
                 });
             }
+            newTags.push(tag.id);
         }
 
         const template = await prisma.template.create({
             data: {
                 title,
                 explanation,
-                tags,
                 code,
                 user: {
-                    connect: {
-                        id: user.id
-                    }
+                    connect: { id: user.id }
+                },
+                tags: {
+                    connect: newTags.map(tagId => ({ id: tagId }))
                 }
             }
         });
-    } catch (error) {
-        return res.status(401).json({ "refreshToken": newRefreshToken, error: error.message });
-    }
 
+        if (!template) {
+            return res.status(500).json({ "refreshToken": newRefreshToken, error: "Failed to save template" });
+        }
+        
+        // after tags and templates are created (or existing), create the relationship between the two.
+        await prisma.codeTemplateTag.createMany({
+            data: newTags.map(tag => ({
+                templateId: template.id,
+                tagId: tag,  // don't do id since newTags is an array of tag ids already
+                assignedBy: user.firstName // Store who assigned the tag, if needed
+            }))
+        });
+
+        return res.status(201).json({ savedTemplate: template, refreshToken: newRefreshToken });
+    } catch (error) {
+        return res.status(400).json({ refreshToken: newRefreshToken, error: error.message });
+    }
 }

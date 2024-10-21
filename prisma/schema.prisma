@@ -85,20 +85,23 @@ model Report {
 model Tag {
   id     Int      @id @default(autoincrement())
   name    String
-  CodeTemplates TemplatesToTags[] // IF IMPLICIT, just replace it with CodeTemplates CodeTemplate[]
+  CodeTemplates CodeTemplateTag[] // IF IMPLICIT, just replace it with CodeTemplates CodeTemplate[]
 }
 
 // Code Template Schema
 model CodeTemplate {
-  id      Int      @id @default(autoincrement())
-  title   String
+  id          Int            @id @default(autoincrement())
+  title       String
   explanation String
-  tags    TemplatesToTags[]  // IF IMPLICIT, just replace it with tags Tag[]
-  code    String
+  tags        CodeTemplateTag[]  // IF IMPLICIT, just replace it with tags Tag[]
+  code        String
+  parentId    Int?  // Can be null since it may not have a parent.      
+  parent      CodeTemplate?  @relation("ForkedTemplates", fields: [parentId], references: [id])
+  children    CodeTemplate[] @relation("ForkedTemplates") // One-to-many relation for forked versions of the template
 }
 
 // Explicit Code-Tag relationship (for now)
-model TemplatesToTags {
+model CodeTemplateTag {
   template   CodeTemplate     @relation(fields: [templateId], references: [id])
   templateId Int // relation scalar field (used in the `@relation` attribute above)
   tag        Tag @relation(fields: [tagId], references: [id])

@@ -11,7 +11,6 @@ generator client {
 datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
-  foreignKeys = true
 }
 
 // NOTE: For User, role can take the following values: 
@@ -79,5 +78,35 @@ model Report {
   commentId     Int?      // Foreign key to Comment
   // Optional foreign keys (reports can be filed for either posts or comments)
   blogPost  BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
-  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  comment Comment?    @relation(fields: [commentId], references: [id], onDelete: Cascade)
+}
+
+// Tag Schema (since string lists can't be used as the type for tags in CodeTemplate)
+model Tag {
+  id      Int         @id @default(autoincrement())
+  name    String
+  CodeTemplates CodeTemplateTag[] // IF IMPLICIT, just replace it with CodeTemplates CodeTemplate[]
+}
+
+// Code Template Schema
+model CodeTemplate {
+  id          Int            @id @default(autoincrement())
+  title       String
+  explanation String
+  tags        CodeTemplateTag[]  // IF IMPLICIT, just replace it with tags Tag[]
+  code        String
+  parentId    Int?  // Can be null since it may not have a parent.      
+  parent      CodeTemplate?  @relation("ForkedTemplates", fields: [parentId], references: [id])
+  children    CodeTemplate[] @relation("ForkedTemplates") // One-to-many relation for forked versions of the template
+}
+
+// Explicit Code-Tag relationship (for now)
+model CodeTemplateTag {
+  template    CodeTemplate   @relation(fields: [templateId], references: [id])
+  templateId  Int  // relation scalar field (used in the `@relation` attribute above)
+  tag         Tag            @relation(fields: [tagId], references: [id])
+  tagId       Int   // relation scalar field (used in the `@relation` attribute above)
+  assignedAt  DateTime       @default(now())
+  assignedBy  String // Probably the user who assigned the tag
+  @@id([templateId, tagId])
 }

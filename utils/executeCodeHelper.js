@@ -13,16 +13,13 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 //Actual method implementation
-export default async function executeCodeHelper(inputCode, language, userInput) {
-    //TODO: Continue implementation
-    let command;
-
+export default async function executeCodeHelper(inputCode, language, stdin) {
     try {
         // Call the compileCode method to compile the code
-        command = await compileCode(inputCode, language);
+        let codeCommand = await compileCode(inputCode, language, stdin);
 
         // Execute the input command
-        const { stdout, stderr } = await execAsync(command);
+        const { stdout, stderr } = await execAsync(codeCommand);
 
         // Return the JSON object result. Handle in diff cases based on whether stderr is null or not
         if (stderr == null){
@@ -36,6 +33,30 @@ export default async function executeCodeHelper(inputCode, language, userInput) 
     }
 
 }
+
+/*
+    Helper method to compileCode
+
+    Purpose: Taking a string, and using regex to clean up the string contents for POST endpoint execution. 
+    Using regex, the following cleaning is done:
+
+        1. Escaping double quotes 
+        2. Escaping single quotes
+        3. Escaping newlines 
+        4. Getting rid of trailing and leading whitespace
+*/
+
+function regexCleaningInput(inputString){
+    // Note: Using the optional chaining operator (?.) to safely handle cases where inputString is null
+    //FIXME: One massive assumption: We assume all lines of code are escaped by a \n, therefore the regex does NOT escape them
+    let cleanedInputString = inputString
+    ?.replace(/\\/g, '\\\\') // Escape backslashes
+    ?.replace(/"/g, '\\"') // Escape double quotes
+    ?.replace(/'/g, "\\'") // Escape single quotes
+    ?.trim(); // Trim any leading or trailing whitespace
+    return cleanedInputString;
+}
+
 
 /*
     Helper method to executeCodeHelper (compileCode)
@@ -61,43 +82,30 @@ export default async function executeCodeHelper(inputCode, language, userInput) 
         2. Implement support for JS (similar to Python)
         3. Think about how to implement for all languages in category B (Java, C, C++ )
 */
-async function compileCode (inputCode, language){
+async function compileCode (inputCode, language, stdin){
 
     let codeCommand; // Defining a variable to store the command to compile the code
 
     // Creating a regex pattern to clean up input code. (Reference: ChatGPT)
-    const regexCleanInputCode = inputCode
-    .replace(/"/g, '\\"') // Escape double quotes
-    .replace(/'/g, "\\'") // Escape single quotes
-    .replace(/[\n]/g, '\\n') // Escape newlines
-    .trim(); // Trim any leading or trailing whitespace
+    let cleanedInputCode = regexCleaningInput(inputCode);
+    let cleanedStdin = regexCleaningInput(stdin);
 
     if (language === "python"){
         // the -c command tells python to execute inputCode as a string not a file
         // Futhermore, need to put "" around the template literal (${}) to make it interpret as a string
-        codeCommand = `python3 -c "${regexCleanInputCode}"`; 
+        // codeCommand = `python3 -c "${cleanedInputCode}"`; 
+        codeCommand = `echo "${cleanedStdin}" | python3 -c "${cleanedInputCode}"`
     }
     // else if (language == "javascript"){ //TODO: Commented out, not implemented yet
-    //     
+    //     // We use node.js to run javascript commands
+    //     // The "-e" flag, like how -c is used for python, tells node.js to execute the command 
+    //     codeCommand = `node -e "${cleanedInputCode}"`; 
     // }
+    
     // TODO: Implemenent support for the other 3 languages (Java, C, C++)
     else{
         throw new Error('Unsupported language');
         
     }
-    return codeCommand;
+    return codeCommand
 }
-
-
-
-//[OLD]: DUMMY IMPLEMENTATION of executeCodeHelper, to test whether endpoint is working
-// export default function executeCodeHelper(inputCode, language, userInput) {
-//     // Simulate code execution and return a dummy JSON object
-//     return {
-//         status: 'success',
-//         language,
-//         inputCode,
-//         userInput,
-//         output: `Executed code successfully in ${language}.`, // Simulated output
-//     };
-// }

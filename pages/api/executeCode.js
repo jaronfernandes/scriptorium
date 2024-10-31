@@ -32,7 +32,7 @@ export default async function handler(req, res){
     }
 
     // Get POST body content
-    const {inputCode, language, userInput} = req.body;
+    const {inputCode, language, stdin} = req.body;
 
     // Define a set of supported languages
     const setOfSupportedLanguages = new Set(["c", "c++", "java", "python", "javascript"]);
@@ -50,8 +50,8 @@ export default async function handler(req, res){
 
     //Trying to execute the code
     try {
-        const codeOutput = await executeCodeHelper(inputCode, language, userInput);
-        res.status(200).json({ codeOutput }); //TODO: Might need to change this output format depending on implementation of executeCodeHelper
+        const codeOutput = await executeCodeHelper(inputCode, language, stdin);
+        res.status(200).json(codeOutput); //TODO: Might need to change this output format depending on implementation of executeCodeHelper
     } catch (error){
         // console.error("Error executing code:", error); // For debugging purposes
         return res.status(500).json({ error: "Failed to execute code" });

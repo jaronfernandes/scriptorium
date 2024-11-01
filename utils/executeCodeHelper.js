@@ -139,6 +139,7 @@ async function compileCode (inputCode, language, stdin){
 
         // Write the code to a temporary file
         //using writeFileSync as this is async function => forces program to wait for input code to be written
+        
         fs.writeFileSync(`${tempJavaFileName}.java`, cleanedInputCode);
 
         //Compile that file (to a .class)

@@ -6,6 +6,7 @@
 //Imports
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import fs from 'fs'; // java specific import
 
 // Recommendation from ChatGPT: Promisify exec to use async/await
 // Purpose: exec is the library that helps "execute" the code at a low level
@@ -48,15 +49,38 @@ export default async function executeCodeHelper(inputCode, language, stdin) {
         4. Getting rid of trailing and leading whitespace
 */
 
-function regexCleaningInput(inputString){
+function regexCleaningInput(language, inputString){
     // Note: Using the optional chaining operator (?.) to safely handle cases where inputString is null
     //FIXME: One massive assumption: We assume all lines of code are escaped by a \n, therefore the regex does NOT escape them
-    let cleanedInputString = inputString
-    ?.replace(/\\/g, '\\\\') // Escape backslashes
-    ?.replace(/"/g, '\\"') // Escape double quotes
-    ?.replace(/'/g, "\\'") // Escape single quotes
-    ?.trim(); // Trim any leading or trailing whitespace
-    return cleanedInputString;
+    
+    if (language === "python" || language === "javascript"){
+        let cleanedInputString = inputString
+        ?.replace(/\\/g, '\\\\') // Escape backslashes
+        ?.replace(/"/g, '\\"') // Escape double quotes
+        ?.replace(/'/g, "\\'") // Escape single quotes
+        ?.trim(); // Trim any leading or trailing whitespace
+        return cleanedInputString;
+    }
+
+    else if (language === "java"){
+        let cleanedInputString = inputString
+        ?.replace(/'/g, "\\'") // Escape single quotes
+        ?.trim(); // Trim any leading or trailing whitespace
+        return cleanedInputString;
+    }
+
+    
+    //Old reference code
+    // let cleanedInputString = inputString
+    // ?.replace(/\\/g, '\\\\') // Escape backslashes
+    // ?.replace(/"/g, '\\"') // Escape double quotes
+    // ?.replace(/'/g, "\\'") // Escape single quotes
+    // ?.trim(); // Trim any leading or trailing whitespace
+    // return cleanedInputString;
+    
+    // // return inputString
+    // // ?.replace(/\\/g, '\\\\') // Escape backslashes
+    // // ?.trim(); // Trim leading and trailing whitespace
 }
 
 
@@ -89,8 +113,8 @@ async function compileCode (inputCode, language, stdin){
     let codeCommand; // Defining a variable to store the command to compile the code
 
     // Creating a regex pattern to clean up input code. (Reference: ChatGPT)
-    let cleanedInputCode = regexCleaningInput(inputCode);
-    let cleanedStdin = regexCleaningInput(stdin);
+    let cleanedInputCode = regexCleaningInput(language, inputCode);
+    let cleanedStdin = regexCleaningInput(language, stdin);
 
     if (language === "python"){
         // the -c command tells python to execute inputCode as a string not a file
@@ -98,10 +122,31 @@ async function compileCode (inputCode, language, stdin){
         // codeCommand = `python3 -c "${cleanedInputCode}"`; 
         codeCommand = `echo "${cleanedStdin}" | python3 -c "${cleanedInputCode}"`
     }
-    else if (language === "javascript"){ //TODO: Commented out, not implemented yet
+    else if (language === "javascript"){
         // We use node.js to run javascript commands
         // The "-e" flag, like how -c is used for python, tells node.js to execute the command 
-        codeCommand = `echo "${stdin}" | node -e "${cleanedInputCode}"`; 
+        codeCommand = `echo "${cleanedStdin}" | node -e "${cleanedInputCode}"`; 
+    }
+    else if (language === "java"){
+        // Unlike Python and JS, Java is a compiled language
+        // Therefore, we need to write the code to another temporary file and compile that file to have it execute
+
+        //FIXME: Need to review whether this assumption holds true
+        // Need to extract the class name from the file so that we can name the temporary file the same
+        // NOT matching the names will lead to errors like : "error: class HelloWorld is public, should be declared in a file named HelloWorld.java"
+        let findingJavaClassName = cleanedInputCode.match(/public\s+class\s+(\w+)/);
+        let tempJavaFileName = findingJavaClassName[1];
+
+        // Write the code to a temporary file
+        //using writeFileSync as this is async function => forces program to wait for input code to be written
+        fs.writeFileSync(`${tempJavaFileName}.java`, cleanedInputCode);
+
+        //Compile that file (to a .class)
+        await execAsync(`javac ${tempJavaFileName}.java`);
+
+        //Execute the code found in this class file
+        codeCommand = `echo "${cleanedStdin}" | java ${tempJavaFileName}`;
+
     }
     
     // TODO: Implemenent support for the other 3 languages (Java, C, C++)

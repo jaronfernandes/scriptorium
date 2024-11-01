@@ -19,12 +19,12 @@ export default async function executeCodeHelper(inputCode, language, stdin) {
         let codeCommand = await compileCode(inputCode, language, stdin);
 
         // Execute the input command
-        const { stdout, stderr } = await execAsync(codeCommand);
-
+        let { stdout, stderr } = await execAsync(codeCommand);
         // Return the JSON object result. Handle in diff cases based on whether stderr is null or not
         if (stderr == null){
             return { output: stdout};
-        } else {
+        } 
+        else {
             return { output: stdout, error: stderr};
         }
     } catch (error) {
@@ -35,6 +35,8 @@ export default async function executeCodeHelper(inputCode, language, stdin) {
 }
 
 /*
+    Docstring for regexCleaningInput
+
     Helper method to compileCode
 
     Purpose: Taking a string, and using regex to clean up the string contents for POST endpoint execution. 
@@ -96,11 +98,11 @@ async function compileCode (inputCode, language, stdin){
         // codeCommand = `python3 -c "${cleanedInputCode}"`; 
         codeCommand = `echo "${cleanedStdin}" | python3 -c "${cleanedInputCode}"`
     }
-    // else if (language == "javascript"){ //TODO: Commented out, not implemented yet
-    //     // We use node.js to run javascript commands
-    //     // The "-e" flag, like how -c is used for python, tells node.js to execute the command 
-    //     codeCommand = `node -e "${cleanedInputCode}"`; 
-    // }
+    else if (language === "javascript"){ //TODO: Commented out, not implemented yet
+        // We use node.js to run javascript commands
+        // The "-e" flag, like how -c is used for python, tells node.js to execute the command 
+        codeCommand = `echo "${stdin}" | node -e "${cleanedInputCode}"`; 
+    }
     
     // TODO: Implemenent support for the other 3 languages (Java, C, C++)
     else{

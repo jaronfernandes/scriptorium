@@ -22,6 +22,7 @@
 // import fs from 'fs';
 // import path from 'path';
 import executeCodeHelper from '../../utils/executeCodeHelper'; //TODO: Double check if import path is correct
+import { cleanUpTempCodeFiles } from '../../utils/executeCodeHelper'; //TODO: Double check if import path is correct
 
 //Handler
 export default async function handler(req, res){
@@ -51,6 +52,9 @@ export default async function handler(req, res){
     //Trying to execute the code
     try {
         const codeOutput = await executeCodeHelper(inputCode, language, stdin);
+        if (language === "java" || language === "c" || language === "c++"){
+            await cleanUpTempCodeFiles(inputCode, language);
+        }
         res.status(200).json(codeOutput); //TODO: Might need to change this output format depending on implementation of executeCodeHelper
     } catch (error){
         // console.error("Error executing code:", error); // For debugging purposes

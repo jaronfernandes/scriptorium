@@ -83,6 +83,27 @@ function regexCleaningInput(language, inputString){
     // // ?.trim(); // Trim leading and trailing whitespace
 }
 
+/*
+    Function to delete any temporary generated files for code execution.
+    Used for the following languages:
+        - Java 
+        - C
+        - C++
+*/
+export async function cleanUpTempCodeFiles(inputCode, language){
+    if (language === "java"){
+        let cleanedInputCode = regexCleaningInput(language, inputCode);
+        let findingJavaClassName = cleanedInputCode.match(/public\s+class\s+(\w+)/);
+        let tempJavaFileName = findingJavaClassName[1];
+        try {
+            await execAsync(`rm ${tempJavaFileName}.java`);
+            await execAsync(`rm ${tempJavaFileName}.class`);
+        } catch (error) {
+            console.error("Error deleting temporary files:", error);
+        }     
+    }
+}
+
 
 /*
     Helper method to executeCodeHelper (compileCode)

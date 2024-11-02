@@ -1,5 +1,5 @@
 import prisma from '../../../../utils/db';
-import { verifyAccessToken, generateRefreshToken } from '../../../../utils/auth';
+import { verifyToken } from '../../../../utils/auth';
 
 /*
 As a user, I want to edit an existing code template’s title, explanation, tags, and code, or delete it entirely.
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
         const { title, explanation, tags, code, templateId } = req.body;
         const updates = {};
 
-        const verified_token = verifyAccessToken(accessToken);
+        const verified_token = verifyToken(accessToken);
         if (!verified_token) {
             return res.status(401).json({ error: "Unauthorized" });
         }
@@ -46,7 +46,7 @@ export default async function handler(req, res) {
         const accessToken = req.headers.authorization;
         const { templateId } = req.body;
 
-        const verified_token = verifyAccessToken(accessToken);
+        const verified_token = verifyToken(accessToken);
         if (!verified_token) {
             return res.status(401).json({ error: "Unauthorized" });
         }

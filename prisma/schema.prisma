@@ -37,13 +37,12 @@ model User {
   // Defining the one to many relationships
   blogPosts   BlogPost[] // A user can create many blog posts
   comments    Comment[]  // A user can comment on many blog posts
-  ratings     Rating[]   // A user can rate blog posts and comments
-  reports     Report[]   // A user can report blog posts or comments
+  ratings     Rating[]   // A user can leave many ratings on either blog posts or comments
+  reports     Report[]   // A user can leave many reports on either blog posts or comments
+  codeTemplates CodeTemplate[] // A user might want to create more than 1 code template
 }
 
 // Blog Post schema 
-// TODO: Do we need a createdAt attribute?
-// TODO: Is the onDelete used properly here? (Ie: If user is deleted, their corresponding blog posts should be too)
 model BlogPost {
   id        Int       @id @default(autoincrement())
   title     String
@@ -55,7 +54,7 @@ model BlogPost {
   updatedAt DateTime  @updatedAt
 
 
-  // Foreign Key
+  // Defining Foreign Key relationships
   authorId  Int       // Foreign key to User
   author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   
@@ -71,32 +70,34 @@ model BlogPost {
 model Comment {
   id        Int       @id @default(autoincrement())
   text      String
-  authorId  Int // Foreign key to User
-  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  postId    Int  // Foreign key to BlogPost
-  post      BlogPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
   hidden    Boolean   @default(false) // Indicates if content is hidden
   upvotes   Int       @default(0)
   downvotes Int       @default(0)
   createdAt DateTime  @default(now())
+
+  // Defining Foreign Key relationships 
+  authorId  Int // Foreign key to User
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  postId    Int  // Foreign key to BlogPost
+  post      BlogPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
+
   // Defining the one to many relationships
   reports   Report[]  // allowing comments to have multiple reports
   ratings   Rating[]   // FIXME: Defining a new one-to-many relationship. Comments can be rated
 }
 
 // Report schema
-// TODO: Are the optional foerign keys formatted properly
-// TODO: Is the onDelete used properly here? (Ie: If the reported blog post or comment is deleted, so should the report?)
 model Report {
   id        Int       @id @default(autoincrement())
   contentType  String   // Either "BlogPost" or "Comment"
   explanation  String
+  
+  // Defining Foreign Key relationships 
   userId        Int       // Foerign key to User
-  blogPostId    Int?      // Foreign key to BlogPost
-  commentId     Int?      // Foreign key to Comment
-  // Optional foreign keys (reports can be filed for either posts or comments)
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blogPostId    Int?      // Foreign key to BlogPost
   blogPost  BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  commentId     Int?      // Foreign key to Comment
   comment Comment?    @relation(fields: [commentId], references: [id], onDelete: Cascade)
 }
 
@@ -105,12 +106,13 @@ model Report {
 model Rating {
    id        Int       @id @default(autoincrement())
    ratingValue Int //FIXME: Assume that this attribute can only take 2 values (0 for downvote, 1 for upvote)
+   
+   // Defining Foreign Key relationships 
    userId      Int  // Foreign key to User 
-   blogPostId    Int?      // Foreign key to BlogPost
-   commentId     Int?      // Foreign key to Comment
-   // Optional foreign keys (comments can be filed for either posts or comments)
    user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+   blogPostId    Int?      // Foreign key to BlogPost
    blogPost  BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+   commentId     Int?      // Foreign key to Comment
    comment Comment?    @relation(fields: [commentId], references: [id], onDelete: Cascade)
 }
 
@@ -118,6 +120,8 @@ model Rating {
 model Tag {
   id      Int         @id @default(autoincrement())
   name    String
+
+  // Defining Foreign Key relationships
   blogPosts BlogPost[] // One to many relationship (1 tag can belong to more than 1 blog post)
   CodeTemplates CodeTemplateTag[] // IF IMPLICIT, just replace it with CodeTemplates CodeTemplate[]
 }
@@ -129,6 +133,10 @@ model CodeTemplate {
   explanation String
   tags        CodeTemplateTag[]  // IF IMPLICIT, just replace it with tags Tag[]
   code        String
+  
+  // Defining Foreign Key relationships 
+  userId      Int          // Foreign key to User
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade) // Establishing the one-to-many relationship
   parentId    Int?  // Can be null since it may not have a parent.      
   parent      CodeTemplate?  @relation("ForkedTemplates", fields: [parentId], references: [id])
   children    CodeTemplate[] @relation("ForkedTemplates") // One-to-many relation for forked versions of the template

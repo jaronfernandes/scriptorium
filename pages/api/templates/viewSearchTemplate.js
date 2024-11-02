@@ -44,9 +44,10 @@ export default async function handler(req, res) {
         }
         // Finds if at least one of the tags is in the given list of tags to find matches with.
         // TODO: Could make it more strict by allowing only templates that have all the tags in the list.
+        // UPDATE: i did it (basically just changed "some" to "every" LOLOL) - suggested by ChatGPT.
         if (tags) {
             filter_settings.tags = {
-                some: {
+                every: {
                     name: {
                         in: tags,
                     }

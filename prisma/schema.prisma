@@ -30,7 +30,7 @@ model User {
   phoneNumber String                                     
   password    String
   avatar      String?    // Storing the file path to the avatar image (uploaded via Multer)                                
-  role        String     @default("VISITOR")  // FIXME: Retaining type as String
+  role        String     @default("USER")  // FIXME: Retaining type as String
   createdAt   DateTime   @default(now()) // Not sure if these two attributes are needed, but could be useful on based on designs in lecture. 
   updatedAt   DateTime   @updatedAt
 
@@ -132,7 +132,7 @@ model CodeTemplate {
   explanation String
   tags        CodeTemplateTag[]  // IF IMPLICIT, just replace it with tags Tag[]
   code        String
-
+  language    String
   // Defining Foreign Key relationships 
   userId      Int          // Foreign key to User
   user        User          @relation(fields: [userId], references: [id]) // NOTE: This used to have onDelete cascade reference

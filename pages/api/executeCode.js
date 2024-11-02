@@ -34,31 +34,71 @@ export default async function handler(req, res){
 
     // Get POST body content
     const {inputCode, language, stdin} = req.body;
+    // Use the helper function to process the code execution
+    const result = await executingCode(inputCode, language, stdin);
 
-    // Define a set of supported languages
-    const setOfSupportedLanguages = new Set(["c", "c++", "java", "python", "javascript"]);
-
-    // Check if required fields are defined 
-    // Here, assume required fields are: inputCode and language
-    if (!inputCode || !language){
-        return res.status(400).json({message: "Missing input code or language"});
-    }
-
-    // Checking if the language is in setOfSupportedLanguages
-    if (!setOfSupportedLanguages.has(language)){
-        return res.status(400).json({message: "Unsupported language"});
-    }
-
-    //Trying to execute the code
-    try {
-        const codeOutput = await executeCodeHelper(inputCode, language, stdin);
-        if (language === "java" || language === "c" || language === "c++"){
-            await cleanUpTempCodeFiles(inputCode, language);
-        }
-        res.status(200).json(codeOutput); //TODO: Might need to change this output format depending on implementation of executeCodeHelper
-    } catch (error){
-        // console.error("Error executing code:", error); // For debugging purposes
-        return res.status(500).json({ error: "Failed to execute code" });
+    // Handle the response based on the helper function's result
+    if (result.error) {
+        return res.status(400).json({ error: result.error });
     }
     
+    return res.status(200).json(result.output);
+
+    // //TODO: Refactor the code from line 39 onward (as a new method, exportable)
+    // await executeCodeHelper(inputCode,language, stdin, res);
+
+    // // Define a set of supported languages
+    // const setOfSupportedLanguages = new Set(["c", "c++", "java", "python", "javascript"]);
+
+    // // Check if required fields are defined 
+    // // Here, assume required fields are: inputCode and language
+    // if (!inputCode || !language){
+    //     return res.status(400).json({message: "Missing input code or language"});
+    // }
+
+    // // Checking if the language is in setOfSupportedLanguages
+    // if (!setOfSupportedLanguages.has(language)){
+    //     return res.status(400).json({message: "Unsupported language"});
+    // }
+
+    // //Trying to execute the code
+    // try {
+    //     const codeOutput = await executeCodeHelper(inputCode, language, stdin);
+    //     if (language === "java" || language === "c" || language === "c++"){
+    //         await cleanUpTempCodeFiles(inputCode, language);
+    //     }
+    //     res.status(200).json(codeOutput); //TODO: Might need to change this output format depending on implementation of executeCodeHelper
+    // } catch (error){
+    //     // console.error("Error executing code:", error); // For debugging purposes
+    //     return res.status(500).json({ error: "Failed to execute code" });
+    // }   
+}
+
+// Creating a new function that pulls out some of the existing handler code
+export async function executingCode(inputCode, language, stdin){
+     // Define a set of supported languages
+     const setOfSupportedLanguages = new Set(["c", "c++", "java", "python", "javascript"]);
+
+     // Check if required fields are defined 
+     // Here, assume required fields are: inputCode and language
+     if (!inputCode || !language){
+         return {error: "Missing input code or language"};
+     }
+ 
+     // Checking if the language is in setOfSupportedLanguages
+     if (!setOfSupportedLanguages.has(language)){
+         return {error: "Unsupported language"};
+     }
+ 
+     //Trying to execute the code
+     try {
+         const codeOutput = await executeCodeHelper(inputCode, language, stdin);
+         if (language === "java" || language === "c" || language === "c++"){
+             await cleanUpTempCodeFiles(inputCode, language);
+         }
+        return { output: codeOutput };
+     } catch (error){
+         return { error: "Error encountered when executing code" };
+     }   
+
 }

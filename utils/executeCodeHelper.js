@@ -214,11 +214,7 @@ async function compileCode (inputCode, language, stdin){
         // Execute the code found in the temporary file + with user args
         codeCommand = `echo "${cleanedStdin}" | ./${tempCppFileName}`;
     }
-    
-    // None of the supported languages are satisfied
-    else{
-        throw new Error('Unsupported language');
-        
-    }
+    // Note: At least 1 of these else branches should be reached because the language validity check...
+    //... is already done in method executingCode under file: executeCode.js
     return { codeCommand, warnings }
 }

@@ -15,7 +15,7 @@ available to authenticated users.
  */
 export default async function handler(req, res) {
     if (req.method === 'GET') { // this is gonna be for viewing a template
-        const { templateId } = req.query;
+        const { templateId, modifiedCode, stdin, language } = req.query;
 
         const template = await prisma.template.findUnique({
             where: {
@@ -26,13 +26,14 @@ export default async function handler(req, res) {
         if (!template) {
             return res.status(404).json({ error: "Template not found" });
         }
+        
 
         // TODO:  "...use an existing code template, run or modify it...""
         // Wtf does run it mean? Do i have to connect this to Carmen's code execution API?
         // Finish later, me sleepy.
     } else if (req.method === "POST") { // this is gonna be for saving (forking) a template
         const accessToken = req.headers.authorization;
-        const { title, explanation, tags, code, templateId } = req.body;
+        const { title, explanation, language, tags, code, templateId } = req.body;
 
         const verified_token = verifyToken(accessToken);
 
@@ -85,7 +86,7 @@ export default async function handler(req, res) {
                     title,
                     explanation,
                     code,
-                    authorId: user.id,
+                    userId: user.id,
                     tags: {
                         connect: newTags.map(tagId => ({ id: tagId }))
                     },

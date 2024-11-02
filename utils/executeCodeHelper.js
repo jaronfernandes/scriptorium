@@ -16,19 +16,6 @@ const execAsync = promisify(exec);
 //Actual method implementation
 export default async function executeCodeHelper(inputCode, language, stdin) {
     try {
-        // // Call the compileCode method to compile the code
-        // let codeCommand = await compileCode(inputCode, language, stdin);
-
-        // // Execute the input command
-        // let { stdout, stderr } = await execAsync(codeCommand);
-        // // Return the JSON object result. Handle in diff cases based on whether stderr is null or not
-        // if (stderr == null){
-        //     return { output: stdout};
-        // } 
-        // else {
-        //     return { output: stdout, error: stderr};
-        // }
-
         // Call the compileCode method to compile the code
         let { codeCommand, warnings } = await compileCode(inputCode, language, stdin);
 
@@ -36,7 +23,12 @@ export default async function executeCodeHelper(inputCode, language, stdin) {
         let { stdout, stderr } = await execAsync(codeCommand);
 
         // Construct the result object
-        let result = { output: stdout, warnings: warnings }; // Include warnings in the result
+        let result = { output: stdout}; // Include warnings in the result
+
+        // Handle any warnings if any
+        if (warnings){
+            result.warnings = warnings;
+        }
 
         // Handle errors if any
         if (stderr) {
@@ -154,8 +146,10 @@ export async function cleanUpTempCodeFiles(inputCode, language){
 */
 async function compileCode (inputCode, language, stdin){
 
-    let codeCommand; // Defining a variable to store the command to compile the code
-    let warnings = ""; // Defining a variable to store warnings. Note: This variable would always be "" for languages "python" and "javascript"
+    // Defining a variable to store the command to compile the code
+    let codeCommand;
+    // Defining a variable to store warnings. Note: This variable would always be "" for languages "python" and "javascript"
+    let warnings = ""; 
 
     // Creating a regex pattern to clean up input code. (Reference: ChatGPT)
     let cleanedInputCode = regexCleaningInput(language, inputCode);
@@ -189,7 +183,7 @@ async function compileCode (inputCode, language, stdin){
 
         //Compile that file (to a .class)
         //FIXME: Includign -Xlint:unchecked as we might need to this to have warnings displayed
-        const { stdout, stderr } = await execAsync(`javac -Xlint:unchecked ${tempJavaFileName}.java`);
+        const { stderr } = await execAsync(`javac -Xlint:unchecked ${tempJavaFileName}.java`);
         warnings = stderr; // Store warnings from compilation
 
         //Execute the code found in this class file + with user args
@@ -202,7 +196,8 @@ async function compileCode (inputCode, language, stdin){
         fs.writeFileSync(`${tempCFileName}.c`, cleanedInputCode);
         //Compile that code into an executable
         // FIXME: Note: From CSC209, the -Wall and the -Wextra flags allow warnigns to be displayed
-        await execAsync(`gcc -Wall -Wextra ${tempCFileName}.c -o ${tempCFileName}`);
+        const { stderr } = await execAsync(`gcc -Wall -Wextra ${tempCFileName}.c -o ${tempCFileName}`);
+        warnings = stderr; // Store warnings from compilation
         //Execute the code found in the temporary file + with user args
         codeCommand = `echo "${cleanedStdin}" | ./${tempCFileName}`;
 
@@ -214,7 +209,8 @@ async function compileCode (inputCode, language, stdin){
         fs.writeFileSync(`${tempCppFileName}.cpp`, cleanedInputCode);
         // Compile that code into an executable
         // Note: The -Wall and -Wextra flags allow warnings to be displayed
-        await execAsync(`g++ -Wall -Wextra ${tempCppFileName}.cpp -o ${tempCppFileName}`);
+        const { stderr } = await execAsync(`g++ -Wall -Wextra ${tempCppFileName}.cpp -o ${tempCppFileName}`);
+        warnings = stderr; // Store warnings from compilation
         // Execute the code found in the temporary file + with user args
         codeCommand = `echo "${cleanedStdin}" | ./${tempCppFileName}`;
     }

@@ -9,7 +9,9 @@ export default async function handler(req, res) {
     /**
      * Assume: title: String, explanation: String, tags: String[], code: String, refreshToken: String
      */
-    const { title, explanation, tags, code, accessToken } = req.body;
+    
+    const accessToken = req.headers.authorization;
+    const { title, explanation, tags, code } = req.body;
 
     const verified_token = verifyAccessToken(accessToken);
 

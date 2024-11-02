@@ -1,5 +1,5 @@
 import prisma from '../../../../utils/db';
-import { verifyAccessToken, generateRefreshToken } from '../../../../utils/auth';
+import { verifyToken } from '../../../../utils/auth';
 
 /*
 As a visitor, I want to use an existing code template, run or modify it, 
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
         const accessToken = req.headers.authorization;
         const { title, explanation, tags, code, templateId } = req.body;
 
-        const verified_token = verifyAccessToken(accessToken);
+        const verified_token = verifyToken(accessToken);
 
         if (!verified_token) {
             return res.status(401).json({ error: "Invalid token" });

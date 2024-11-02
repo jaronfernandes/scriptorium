@@ -62,25 +62,12 @@ function regexCleaningInput(language, inputString){
         return cleanedInputString;
     }
 
-    else if (language === "java"){
+    else if (language === "java" || language === "c"){
         let cleanedInputString = inputString
         ?.replace(/'/g, "\\'") // Escape single quotes
         ?.trim(); // Trim any leading or trailing whitespace
         return cleanedInputString;
     }
-
-    
-    //Old reference code
-    // let cleanedInputString = inputString
-    // ?.replace(/\\/g, '\\\\') // Escape backslashes
-    // ?.replace(/"/g, '\\"') // Escape double quotes
-    // ?.replace(/'/g, "\\'") // Escape single quotes
-    // ?.trim(); // Trim any leading or trailing whitespace
-    // return cleanedInputString;
-    
-    // // return inputString
-    // // ?.replace(/\\/g, '\\\\') // Escape backslashes
-    // // ?.trim(); // Trim leading and trailing whitespace
 }
 
 /*
@@ -99,7 +86,16 @@ export async function cleanUpTempCodeFiles(inputCode, language){
             await execAsync(`rm ${tempJavaFileName}.java`);
             await execAsync(`rm ${tempJavaFileName}.class`);
         } catch (error) {
-            console.error("Error deleting temporary files:", error);
+            console.error("Error deleting the temporary Java file and class:", error);
+        }     
+    }
+    else if (language === "c"){
+        const tempCFileName = "tempCFile"
+        try {
+            await execAsync(`rm ${tempCFileName}.c`);
+            await execAsync(`rm ${tempCFileName}`);
+        } catch (error) {
+            console.error("Error deleting the temporary C file and executable:", error);
         }     
     }
 }
@@ -166,8 +162,18 @@ async function compileCode (inputCode, language, stdin){
         //Compile that file (to a .class)
         await execAsync(`javac ${tempJavaFileName}.java`);
 
-        //Execute the code found in this class file
+        //Execute the code found in this class file + with user args
         codeCommand = `echo "${cleanedStdin}" | java ${tempJavaFileName}`;
+    }
+    else if (language === "c"){
+        // Like Java, we need to compile all code written in c into a temporary file (that later gets deleted)
+        const tempCFileName = "tempCFile"
+        // Write the code to a temporary file
+        fs.writeFileSync(`${tempCFileName}.c`, cleanedInputCode);
+        //Compile that code into an executable
+        await execAsync(`gcc ${tempCFileName}.c -o ${tempCFileName}`);
+        //Execute the code found in the temporary file + with user args
+        codeCommand = `echo "${cleanedStdin}" | ./${tempCFileName}`;
 
     }
     

@@ -27,10 +27,12 @@ export default async function handler(req, res) {
             return res.status(404).json({ error: "Template not found" });
         }
         
+        const result = executeCode(modifiedCode, stdin)
 
-        // TODO:  "...use an existing code template, run or modify it...""
-        // Wtf does run it mean? Do i have to connect this to Carmen's code execution API?
-        // Finish later, me sleepy.
+        // NOTE: The "visitor can run and modify a code template" - THE MODIFYING BIT IS FRONT-END.
+        // DO NOT UPDATE THE EXISTING CODE TEMPLATE SINCE THEY ARE UNAUTHENTICATED. MODIFYING IS ONLY FOR THE VISITOR'S VIEW.
+        // If the visitor wants to save the modified code, they can fork the template.
+        // But we handle running the code through the code execution api helper function.s
     } else if (req.method === "POST") { // this is gonna be for saving (forking) a template
         const accessToken = req.headers.authorization;
         const { title, explanation, language, tags, code, templateId } = req.body;

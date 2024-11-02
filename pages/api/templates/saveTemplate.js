@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Assume: title: Sring, explanation: String, tags: String[], code: String, refreshToken: String
+     * Assume: title: String, explanation: String, tags: String[], code: String, refreshToken: String
      */
     const { title, explanation, tags, code, accessToken } = req.body;
 

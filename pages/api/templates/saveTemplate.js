@@ -44,18 +44,18 @@ export default async function handler(req, res) {
             }
             newTags.push(tag.id);
         }
-
+        
+        // Helped by ChatGPT since i had no idea how to connect tags to templates
         const template = await prisma.template.create({
             data: {
                 title,
                 explanation,
                 code,
-                user: {
-                    connect: { id: user.id }
-                },
+                authorId: user.id,
                 tags: {
                     connect: newTags.map(tagId => ({ id: tagId }))
-                }
+                },
+                // children: []  // implicitly empty
             }
         });
 

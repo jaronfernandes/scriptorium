@@ -132,7 +132,7 @@ model CodeTemplate {
   explanation String
   tags        CodeTemplateTag[]  // IF IMPLICIT, just replace it with tags Tag[]
   code        String
-
+  language    String
   // Defining Foreign Key relationships 
   userId      Int          // Foreign key to User
   user        User          @relation(fields: [userId], references: [id]) // NOTE: This used to have onDelete cascade reference

@@ -29,10 +29,6 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: "User not found" });
     }
 
-    const newRefreshToken = generateRefreshToken({
-        userId: user.id, firstName: user.firstName, lastName: user.lastName, email: user.email, phoneNumber: user.phoneNumber, role: user.role, expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24)
-    });
-
     try {
         const newTags = []
 
@@ -64,7 +60,7 @@ export default async function handler(req, res) {
         });
 
         if (!template) {
-            return res.status(500).json({ "refreshToken": newRefreshToken, error: "Failed to save template" });
+            return res.status(500).json({ error: "Failed to save template" });
         }
         
         // after tags and templates are created (or existing), create the relationship between the two.
@@ -76,8 +72,8 @@ export default async function handler(req, res) {
             }))
         });
 
-        return res.status(201).json({ savedTemplate: template, refreshToken: newRefreshToken });
+        return res.status(201).json({ savedTemplate: template });
     } catch (error) {
-        return res.status(400).json({ refreshToken: newRefreshToken, error: error.message });
+        return res.status(400).json({ error: error.message });
     }
 }

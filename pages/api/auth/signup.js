@@ -2,18 +2,24 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 const bcrypt = require('bcrypt');
 import jwt from 'jsonwebtoken';
-import multer from 'multer';
+import { avatarOptions } from '@/constants/avatars';
 
-const upload = multer({ dest: 'uploads/avatars/' });
 
 export default async function handler(req, res) {
     if (req.method === 'POST') {
-      const { firstName, lastName, email, password, phoneNumber } = req.body;
-      const hashedPassword = await bcrypt.hash(password, 10);
+    const { firstName, lastName, email, password, phoneNumber, avatar} = req.body;
+    
+    // Check if the selected avatar is valid
+    if (avatar && !avatarOptions.includes(avatar)) {
+        return res.status(400).json({ error: 'Invalid avatar choice' });
+    }
+    const avatarPath = avatar ? `/avatars/${avatar}` : null; // Set path if avatar is provided, else null
+
+    const hashedPassword = await bcrypt.hash(password, 10);
   
       try {
         const user = await prisma.user.create({
-          data: { firstName, lastName, email, password: hashedPassword, phoneNumber, role: "USER" }
+          data: { firstName, lastName, email, password: hashedPassword, phoneNumber, role: "USER", avatar: avatarPath }
         });
   
         const accessToken = jwt.sign({ id: user.id, role: user.role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' });

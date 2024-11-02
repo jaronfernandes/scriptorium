@@ -55,7 +55,7 @@ export default async function handler(req, res) {
                 tags: {
                     connect: newTags.map(tagId => ({ id: tagId }))
                 },
-                // children: []  // implicitly empty
+                // children: []  // implicitly empty, prisma will handle the empty array creation automatically.
             }
         });
 

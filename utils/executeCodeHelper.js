@@ -16,19 +16,36 @@ const execAsync = promisify(exec);
 //Actual method implementation
 export default async function executeCodeHelper(inputCode, language, stdin) {
     try {
+        // // Call the compileCode method to compile the code
+        // let codeCommand = await compileCode(inputCode, language, stdin);
+
+        // // Execute the input command
+        // let { stdout, stderr } = await execAsync(codeCommand);
+        // // Return the JSON object result. Handle in diff cases based on whether stderr is null or not
+        // if (stderr == null){
+        //     return { output: stdout};
+        // } 
+        // else {
+        //     return { output: stdout, error: stderr};
+        // }
+
         // Call the compileCode method to compile the code
-        let codeCommand = await compileCode(inputCode, language, stdin);
+        let { codeCommand, warnings } = await compileCode(inputCode, language, stdin);
 
         // Execute the input command
         let { stdout, stderr } = await execAsync(codeCommand);
-        // Return the JSON object result. Handle in diff cases based on whether stderr is null or not
-        if (stderr == null){
-            return { output: stdout};
-        } 
-        else {
-            return { output: stdout, error: stderr};
+
+        // Construct the result object
+        let result = { output: stdout, warnings: warnings }; // Include warnings in the result
+
+        // Handle errors if any
+        if (stderr) {
+            result.error = stderr; // Assign the error if it exists
         }
-    } catch (error) {
+        return result
+    } 
+    
+    catch (error) {
         // Handle any errors that occur during execution
         return { output: null, error: error.message };
     }
@@ -138,6 +155,7 @@ export async function cleanUpTempCodeFiles(inputCode, language){
 async function compileCode (inputCode, language, stdin){
 
     let codeCommand; // Defining a variable to store the command to compile the code
+    let warnings = ""; // Defining a variable to store warnings. Note: This variable would always be "" for languages "python" and "javascript"
 
     // Creating a regex pattern to clean up input code. (Reference: ChatGPT)
     let cleanedInputCode = regexCleaningInput(language, inputCode);
@@ -171,7 +189,8 @@ async function compileCode (inputCode, language, stdin){
 
         //Compile that file (to a .class)
         //FIXME: Includign -Xlint:unchecked as we might need to this to have warnings displayed
-        await execAsync(`javac -Xlint:unchecked ${tempJavaFileName}.java`);
+        const { stdout, stderr } = await execAsync(`javac -Xlint:unchecked ${tempJavaFileName}.java`);
+        warnings = stderr; // Store warnings from compilation
 
         //Execute the code found in this class file + with user args
         codeCommand = `echo "${cleanedStdin}" | java ${tempJavaFileName}`;
@@ -205,5 +224,5 @@ async function compileCode (inputCode, language, stdin){
         throw new Error('Unsupported language');
         
     }
-    return codeCommand
+    return { codeCommand, warnings }
 }

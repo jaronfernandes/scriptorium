@@ -56,7 +56,7 @@ model BlogPost {
 
   // Defining Foreign Key relationships
   authorId  Int       // Foreign key to User
-  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id])
   
   // Defining the one to many relationships
   tags      Tag[]
@@ -66,7 +66,6 @@ model BlogPost {
 }
 
 // Comment schema 
-// TODO: Is the onDelete used properly here? (Ie: If user or post is deleted, the comment should be deleted too)
 model Comment {
   id        Int       @id @default(autoincrement())
   text      String
@@ -77,9 +76,9 @@ model Comment {
 
   // Defining Foreign Key relationships 
   authorId  Int // Foreign key to User
-  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id]) // NOTE: This used to have onDelete cascade reference
   postId    Int  // Foreign key to BlogPost
-  post      BlogPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post      BlogPost  @relation(fields: [postId], references: [id])  // NOTE: This used to have onDelete cascade reference
 
   // Defining the one to many relationships
   reports   Report[]  // allowing comments to have multiple reports
@@ -94,11 +93,11 @@ model Report {
   
   // Defining Foreign Key relationships 
   userId        Int       // Foerign key to User
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id]) // NOTE: This used to have onDelete cascade reference
   blogPostId    Int?      // Foreign key to BlogPost
-  blogPost  BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  blogPost  BlogPost? @relation(fields: [blogPostId], references: [id]) // NOTE: This used to have onDelete cascade reference
   commentId     Int?      // Foreign key to Comment
-  comment Comment?    @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  comment Comment?    @relation(fields: [commentId], references: [id]) // NOTE: This used to have onDelete cascade reference
 }
 
 //FIXME: New schema for the Rating
@@ -109,11 +108,11 @@ model Rating {
    
    // Defining Foreign Key relationships 
    userId      Int  // Foreign key to User 
-   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+   user        User      @relation(fields: [userId], references: [id]) // NOTE: This used to have onDelete cascade reference
    blogPostId    Int?      // Foreign key to BlogPost
-   blogPost  BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+   blogPost  BlogPost? @relation(fields: [blogPostId], references: [id]) // NOTE: This used to have onDelete cascade reference 
    commentId     Int?      // Foreign key to Comment
-   comment Comment?    @relation(fields: [commentId], references: [id], onDelete: Cascade)
+   comment Comment?    @relation(fields: [commentId], references: [id]) // NOTE: This used to have onDelete cascade reference
 }
 
 // Tag Schema (since string lists can't be used as the type for tags in CodeTemplate)
@@ -133,10 +132,10 @@ model CodeTemplate {
   explanation String
   tags        CodeTemplateTag[]  // IF IMPLICIT, just replace it with tags Tag[]
   code        String
-  
+
   // Defining Foreign Key relationships 
   userId      Int          // Foreign key to User
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade) // Establishing the one-to-many relationship
+  user        User          @relation(fields: [userId], references: [id]) // NOTE: This used to have onDelete cascade reference
   parentId    Int?  // Can be null since it may not have a parent.      
   parent      CodeTemplate?  @relation("ForkedTemplates", fields: [parentId], references: [id])
   children    CodeTemplate[] @relation("ForkedTemplates") // One-to-many relation for forked versions of the template

@@ -1,5 +1,6 @@
 import prisma from '../../../../utils/db';
 import { verifyToken } from '../../../../utils/auth';
+import { executingCode } from '../../../../pages/api/executeCode';
 
 /*
 As a visitor, I want to use an existing code template, run or modify it, 
@@ -26,13 +27,20 @@ export default async function handler(req, res) {
         if (!template) {
             return res.status(404).json({ error: "Template not found" });
         }
-        
-        const result = executeCode(modifiedCode, stdin)
 
         // NOTE: The "visitor can run and modify a code template" - THE MODIFYING BIT IS FRONT-END.
         // DO NOT UPDATE THE EXISTING CODE TEMPLATE SINCE THEY ARE UNAUTHENTICATED. MODIFYING IS ONLY FOR THE VISITOR'S VIEW.
         // If the visitor wants to save the modified code, they can fork the template.
         // But we handle running the code through the code execution api helper function.s
+        
+        const result = executingCode(modifiedCode, language, stdin);
+
+        // Handle the response based on the helper function's result
+        if (result.error) {
+            return res.status(400).json({ error: result.error });
+        }
+        
+        return res.status(200).json(result.output);
     } else if (req.method === "POST") { // this is gonna be for saving (forking) a template
         const accessToken = req.headers.authorization;
         const { title, explanation, language, tags, code, templateId } = req.body;

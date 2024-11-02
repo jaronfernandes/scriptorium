@@ -52,6 +52,7 @@ export default async function executeCodeHelper(inputCode, language, stdin) {
 function regexCleaningInput(language, inputString){
     // Note: Using the optional chaining operator (?.) to safely handle cases where inputString is null
     //FIXME: One massive assumption: We assume all lines of code are escaped by a \n, therefore the regex does NOT escape them
+    //FIXME: Likely need to work on further refining the regex
     
     if (language === "python" || language === "javascript"){
         let cleanedInputString = inputString
@@ -62,7 +63,7 @@ function regexCleaningInput(language, inputString){
         return cleanedInputString;
     }
 
-    else if (language === "java" || language === "c"){
+    else if (language === "java" || language === "c" || language === "c++"){
         let cleanedInputString = inputString
         ?.replace(/'/g, "\\'") // Escape single quotes
         ?.trim(); // Trim any leading or trailing whitespace
@@ -97,6 +98,15 @@ export async function cleanUpTempCodeFiles(inputCode, language){
         } catch (error) {
             console.error("Error deleting the temporary C file and executable:", error);
         }     
+    }
+    else if (language === "c++"){
+        const tempCFileName = "tempCppFile"
+        try {
+            await execAsync(`rm ${tempCFileName}.cpp`);
+            await execAsync(`rm ${tempCFileName}`);
+        } catch (error) {
+            console.error("Error deleting the temporary C++ file and executable:", error);
+        }   
     }
 }
 
@@ -160,7 +170,8 @@ async function compileCode (inputCode, language, stdin){
         fs.writeFileSync(`${tempJavaFileName}.java`, cleanedInputCode);
 
         //Compile that file (to a .class)
-        await execAsync(`javac ${tempJavaFileName}.java`);
+        //FIXME: Includign -Xlint:unchecked as we might need to this to have warnings displayed
+        await execAsync(`javac -Xlint:unchecked ${tempJavaFileName}.java`);
 
         //Execute the code found in this class file + with user args
         codeCommand = `echo "${cleanedStdin}" | java ${tempJavaFileName}`;
@@ -171,13 +182,25 @@ async function compileCode (inputCode, language, stdin){
         // Write the code to a temporary file
         fs.writeFileSync(`${tempCFileName}.c`, cleanedInputCode);
         //Compile that code into an executable
-        await execAsync(`gcc ${tempCFileName}.c -o ${tempCFileName}`);
+        // FIXME: Note: From CSC209, the -Wall and the -Wextra flags allow warnigns to be displayed
+        await execAsync(`gcc -Wall -Wextra ${tempCFileName}.c -o ${tempCFileName}`);
         //Execute the code found in the temporary file + with user args
         codeCommand = `echo "${cleanedStdin}" | ./${tempCFileName}`;
 
     }
+    else if (language === "c++") {
+        // Like Java, we need to compile all code written in C++ into a temporary file (that later gets deleted)
+        const tempCppFileName = "tempCppFile";
+        // Write the code to a temporary file
+        fs.writeFileSync(`${tempCppFileName}.cpp`, cleanedInputCode);
+        // Compile that code into an executable
+        // Note: The -Wall and -Wextra flags allow warnings to be displayed
+        await execAsync(`g++ -Wall -Wextra ${tempCppFileName}.cpp -o ${tempCppFileName}`);
+        // Execute the code found in the temporary file + with user args
+        codeCommand = `echo "${cleanedStdin}" | ./${tempCppFileName}`;
+    }
     
-    // TODO: Implemenent support for the other 3 languages (Java, C, C++)
+    // None of the supported languages are satisfied
     else{
         throw new Error('Unsupported language');
         

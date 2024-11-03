@@ -62,6 +62,21 @@ export default async function handler (req, res){
         }
     }
 
+    if (contentType === "Comment"){
+        // Defining the values of page and limit
+        // Key assumption: If the page and/or limit were not given, assign the default values. 
+        // The default is assumed to be: (<total_num_entries>//10) number of pages, but each page can only have 10 entries
+        // An edge case is: If there are no entries, the page count should be 1
+        totalComments = await prisma.comment.count();
+        limitAsNumber = limit ? parseInt(limit, 10) : 10;
+        if (totalComments < 10 || totalComments < limitAsNumber){
+            pageAsNumber = 1;
+        }
+        else {
+            pageAsNumber = Math.ceil(totalComments / limitAsNumber);
+        }
+    }
+
     // Try statement to retrieve all non-hidden blog posts AND all non-hidden comments
     try {
         // Defining common returned variable
@@ -106,9 +121,15 @@ export default async function handler (req, res){
 
         // Sort the entries in descending order from having the most reports to having the least reports 
         formattedContent.sort((a,b) => (b.reportCount - a.reportCount));
+
+        // Before we return the results, need to define the variables for pagination
+        // Pagination logic: Calculate start and end indices
+        const startIndex = (pageAsNumber - 1) * limitAsNumber;
+        const paginatedContent = formattedContent.slice(startIndex, startIndex + limitAsNumber);
         
         // Return the results
-        return res.status(200).json(formattedContent);
+        // return res.status(200).json(formattedContent); //The old, non-paginated version
+        return res.status(200).json(paginatedContent);
     } catch (error) {
         // console.error("Error fetching and/or sorting content:", error); // For debugging purposes
         return res.status(500).json({ error: "Failed to fetch or sort content" });

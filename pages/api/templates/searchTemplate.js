@@ -5,6 +5,9 @@ As a visitor, I want to search through all available templates by title,
 tags, or content so that I can quickly find relevant code for my needs.
 */
 
+// THIS HAS BEEN TESTED. BUT NEEDS PAGINATION PROBABLY.
+// ALSO MIGHT NEED TO CHECK IF TAGS IS AN ARRAY OR NOT. THAT COULD MESS STUFF UP.
+
 /**
  * 
  * @param {*} req 

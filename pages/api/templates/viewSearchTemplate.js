@@ -1,11 +1,13 @@
-import prisma from '../../../../utils/db';
-import { verifyToken } from '../../../../utils/verifyToken';
+import prisma from '../../../utils/db';
+import { verifyToken } from '../../../utils/verifyToken';
 
 
 /*
 As a user, I want to view and search through my list of my saved templates, 
 including their titles, explanations, and tags, so that I can easily find and reuse them.
 */
+
+// NEED PAGINATION HERE TOO. TESTED, BUT WITHOUT PAGINATION.
 
 /**
  * 
@@ -19,27 +21,29 @@ export default async function handler(req, res) {
     }
 
     const accessToken = req.headers.authorization;
-    const { title, explanation, tags } = req.query;
+    const { title, explanation, tempTags } = req.query;
 
     const verified_token = verifyToken(req, res);
     if (!verified_token) {
         return res.status(401).json({ error: "Unauthorized" });
     }
 
+    if (tempTags && !Array.isArray(tempTags)) {
+        var tags = [tempTags];
+    }
+
     try {
         const filter_settings = {
-            authorId: verified_token.userId,
+            userId: verified_token.userId,
         }
         if (title) {
             filter_settings.title = {
                 contains: title,
-                mode: "insensitive"
             }
         }
         if (explanation) {
             filter_settings.explanation = {
                 contains: explanation,
-                mode: "insensitive"
             }
         }
         // Finds if at least one of the tags is in the given list of tags to find matches with.

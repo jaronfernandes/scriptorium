@@ -74,6 +74,7 @@ export default async function handler(req, res) {
                     code,
                     userId: user.id,
                     language: language.toLowerCase(),
+                    isForked: true,
                     tags: {
                         connect: newTags.map(tagId => ({ id: tagId }))
                     },

@@ -7,7 +7,7 @@ As a user, I want to view and search through my list of my saved templates,
 including their titles, explanations, and tags, so that I can easily find and reuse them.
 */
 
-// NEED PAGINATION HERE TOO. TESTED, BUT WITHOUT PAGINATION.
+// Tested
 
 /**
  * 
@@ -20,13 +20,16 @@ export default async function handler(req, res) {
         return res.status(405).json({ message: "Must be a GET request." });
     }
 
-    const accessToken = req.headers.authorization;
-    const { title, explanation, tempTags } = req.query;
-
+    const { title, explanation, tempTags, page, pageSize } = req.query;
     const verified_token = verifyToken(req, res);
+
     if (!verified_token) {
         return res.status(401).json({ error: "Unauthorized" });
     }
+
+    const intPage = parseInt(page) || 1;
+    const intPageSize = parseInt(pageSize) || 10;
+    const skip = (intPage - 1) * intPageSize;
 
     if (tempTags && !Array.isArray(tempTags)) {
         var tags = [tempTags];
@@ -46,9 +49,7 @@ export default async function handler(req, res) {
                 contains: explanation,
             }
         }
-        // Finds if at least one of the tags is in the given list of tags to find matches with.
-        // TODO: Could make it more strict by allowing only templates that have all the tags in the list.
-        // UPDATE: i did it (basically just changed "some" to "every" LOLOL) - suggested by ChatGPT.
+
         if (tags) {
             filter_settings.tags = {
                 every: {
@@ -59,11 +60,26 @@ export default async function handler(req, res) {
             }
         }
 
-       const templates = await prisma.codeTemplate.findMany({
-            where: filter_settings
+        // Like searchTemplate.js, GPT helped with pagination here.
+        const templates = await prisma.codeTemplate.findMany({
+            where: filter_settings,
+            skip: skip,
+            take: intPageSize,
+            orderBy: { id: 'desc' }  // descending
         });
 
-        return res.status(200).json({ "templates": templates });
+        const count = await prisma.codeTemplate.count();
+        const totalPages = Math.ceil(count / intPageSize);
+
+        res.status(200).json({
+            data: templates,
+            meta: {
+              currentPage: intPage,
+              pageSize: intPageSize,
+              totalPages: totalPages,
+              totalCount: count,
+            }
+          });
     } catch (error) {
         return res.status(401).json({ "error": error.message });
     }

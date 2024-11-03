@@ -1,9 +1,11 @@
-import prisma from '../../../../utils/db';
-import { verifyToken } from '../../../../utils/verifyToken';
+import prisma from '../../../utils/db';
+import { verifyToken } from '../../../utils/verifyToken';
 
 /*
 As a user, I want to edit an existing code template’s title, explanation, tags, and code, or delete it entirely.
 */
+
+// THIS HAS BEEN TESTED.
 
 /**
  * 
@@ -45,8 +47,19 @@ export default async function handler(req, res) {
             if (explanation) {
                 updates.explanation = explanation;
             }
+            // GPT code since tags are so annoying.
             if (tags) {
-                updates.tags = tags;
+                const tagUpdates = Array.isArray(tags) ? tags : [tags]; // Ensure tags is an array
+                const tagConnections = await Promise.all(tagUpdates.map(async (tag) => {
+                    const existingTag = await prisma.tag.findUnique({
+                        where: { name: tag }
+                    });
+                    return existingTag ? { id: existingTag.id } : await prisma.tag.create({ data: { name: tag } });
+                }));
+            
+                updates.tags = {
+                    set: tagConnections // Use 'set' to replace existing tags
+                };
             }
             if (code) {
                 updates.code = code;

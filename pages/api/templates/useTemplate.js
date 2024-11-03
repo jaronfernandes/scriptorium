@@ -16,22 +16,12 @@ available to authenticated users.
  */
 export default async function handler(req, res) {
     if (req.method === 'GET') { // this is gonna be for viewing a template
-        const { templateId, modifiedCode, stdin, language } = req.query;
-
-        const template = await prisma.template.findUnique({
-            where: {
-                id: parseInt(templateId),
-            }
-        });
-
-        if (!template) {
-            return res.status(404).json({ error: "Template not found" });
-        }
+        const { modifiedCode, stdin, language } = req.query;
 
         // NOTE: The "visitor can run and modify a code template" - THE MODIFYING BIT IS FRONT-END.
         // DO NOT UPDATE THE EXISTING CODE TEMPLATE SINCE THEY ARE UNAUTHENTICATED. MODIFYING IS ONLY FOR THE VISITOR'S VIEW.
         // If the visitor wants to save the modified code, they can fork the template.
-        // But we handle running the code through the code execution api helper function.s
+        // But we handle running the code through the code execution api helper function.
         
         const result = executingCode(modifiedCode, language, stdin);
 
@@ -97,10 +87,12 @@ export default async function handler(req, res) {
                     explanation,
                     code,
                     userId: user.id,
+                    language,
                     tags: {
                         connect: newTags.map(tagId => ({ id: tagId }))
                     },
                     parentId: template.id,  // This is the key attribute that indicates it's a forked version
+                    // Children is implicitly empty since it's a new template
                 }
             });
     

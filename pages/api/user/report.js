@@ -8,46 +8,18 @@
 
 // Imports 
 import prisma from "../../../utils/db"; 
-// import { verifyUser, verifyAdmin} from "../../../utils/verification"; //TODO: OLD LEGACY CODE FOR AUTHENTICATION
 import {verifyToken} from "../../../utils/verifyToken";
-
-// // Dummy handler to test auth
-// export default async function handler (req, res){
-
-//     if (req.method !== "POST"){
-//         return res.status(405).json({error: "Method not supported"});
-//     }
-
-//     const isUser = verifyToken(req, res);
-//     if (!isUser){
-//         return; // JSON response already handled under the case where we have a visitor trying to access
-//     } 
-    
-//     else {
-//         return res.status(200).json({"message": "hello world"});
-//     }
-    
-// }
 
 
 // ACTUAL CODE Handler 
 export default async function handler (req, res){
-
-    //TODO: OLD LEGACY CODE FOR AUTHENTICATION
-    // // Verify if it's a user (or system admin) who is trying to access
-    // // TODO: Commented out for now since unsure about implementation
-    // const isUser = verifyUser(req, res);
-    // const isAdmin = verifyAdmin(req, res);
-    // if (!isUser && !isAdmin){
-    //     return; // JSON response already handled under the case where we have a visitor trying to access
-    // }
 
     // Checking if request type is correct
     if (req.method !== "POST"){
         return res.status(405).json({error: "Method not supported"});
     }
 
-    //TODO: New auth code starts here
+    //Authenticating the user
     const isUser = verifyToken(req, res);
         if (!isUser){
             return; // JSON response already handled under the case where we have a visitor trying to access
@@ -137,8 +109,8 @@ export default async function handler (req, res){
         newReport = await prisma.report.create({
             data
         });
-        // Return the created author
-        return res.status(201).json(newReport); // 201 status for successful creation
+        // Return the created content (either blog post or comment)
+        return res.status(201).json(newReport);
       } catch (error) {
         // console.error("Error creating report:", error); // For debugging purposes
         return res.status(500).json({error: error, message: "Failed to create report" });

@@ -15,16 +15,18 @@ As a user, I want to edit an existing code template’s title, explanation, tags
 export default async function handler(req, res) {
     if (req.method === 'PUT') {
         const accessToken = req.headers.authorization;
-        const { title, explanation, tags, code, templateId } = req.body;
+        const { title, explanation, tags, code, language, templateId } = req.body;
         const updates = {};
 
         const verified_token = verifyToken(req, res);
         if (!verified_token) {
             return res.status(401).json({ error: "Unauthorized" });
-        }
-        if (!templateId) {
+        } else if (!templateId) {
             return res.status(400).json({ error: "Template ID is required." });
+        } else if (!language || !["javascript", "python", "java", "c++", "c"].includes(language.toLowerCase())) {
+            return res.status(400).json({ error: "Valid language is required." });
         }
+
         
         try {
             const template = await prisma.codeTemplate.findUnique({
@@ -63,6 +65,9 @@ export default async function handler(req, res) {
             }
             if (code) {
                 updates.code = code;
+            }
+            if (language) {
+                updates.language = language.toLowerCase();
             }
     
             const updatedTemplate = await prisma.codeTemplate.update({

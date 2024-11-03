@@ -84,6 +84,10 @@ model Comment {
   // Defining the one to many relationships
   reports   Report[]  // allowing comments to have multiple reports
   ratings   Rating[]   // FIXME: Defining a new one-to-many relationship. Comments can be rated
+ 
+  parentId  Int?        // Optional field for replies
+  parent    Comment?    @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[]   @relation("CommentReplies")
 }
 
 // Report schema
@@ -123,7 +127,7 @@ model Tag {
 
   // Defining Foreign Key relationships
   blogPosts BlogPost[] // One to many relationship (1 tag can belong to more than 1 blog post)
-  CodeTemplates CodeTemplateTag[] // IF IMPLICIT, just replace it with CodeTemplates CodeTemplate[]
+  CodeTemplates CodeTemplate[] // IF IMPLICIT, just replace it with CodeTemplates CodeTemplate[]
 }
 
 // Code Template Schema
@@ -131,7 +135,7 @@ model CodeTemplate {
   id          Int            @id @default(autoincrement())
   title       String
   explanation String
-  tags        CodeTemplateTag[]  // IF IMPLICIT, just replace it with tags Tag[]
+  tags        Tag[]  // IF IMPLICIT, just replace it with tags Tag[]
   code        String
   language    String
   // Defining Foreign Key relationships 
@@ -141,15 +145,4 @@ model CodeTemplate {
   parent      CodeTemplate?  @relation("ForkedTemplates", fields: [parentId], references: [id])
   children    CodeTemplate[] @relation("ForkedTemplates") // One-to-many relation for forked versions of the template
   blogPostLinks   BlogPost[]   @relation("BlogPostCodeTemplates")
-}
-
-// Explicit Code-Tag relationship (for now)
-model CodeTemplateTag {
-  template    CodeTemplate   @relation(fields: [templateId], references: [id])
-  templateId  Int  // relation scalar field (used in the `@relation` attribute above)
-  tag         Tag            @relation(fields: [tagId], references: [id])
-  tagId       Int   // relation scalar field (used in the `@relation` attribute above)
-  assignedAt  DateTime       @default(now())
-  assignedBy  String // Probably the user who assigned the tag
-  @@id([templateId, tagId])
 }

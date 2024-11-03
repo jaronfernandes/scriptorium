@@ -138,10 +138,11 @@ model CodeTemplate {
   tags        Tag[]  // IF IMPLICIT, just replace it with tags Tag[]
   code        String
   language    String
+  isForked    Boolean       @default(false) 
   // Defining Foreign Key relationships 
   userId      Int          // Foreign key to User
   user        User          @relation(fields: [userId], references: [id]) // NOTE: This used to have onDelete cascade reference
-  parentId    Int?  // Can be null since it may not have a parent.      
+  parentId    Int?         // Can be null since it may not have a parent.      
   parent      CodeTemplate?  @relation("ForkedTemplates", fields: [parentId], references: [id])
   children    CodeTemplate[] @relation("ForkedTemplates") // One-to-many relation for forked versions of the template
   blogPostLinks   BlogPost[]   @relation("BlogPostCodeTemplates")

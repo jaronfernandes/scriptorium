@@ -14,7 +14,6 @@ As a user, I want to edit an existing code template’s title, explanation, tags
  */
 export default async function handler(req, res) {
     if (req.method === 'PUT') {
-        const accessToken = req.headers.authorization;
         const { title, explanation, tags, code, language, templateId } = req.body;
         const updates = {};
 
@@ -82,7 +81,6 @@ export default async function handler(req, res) {
             res.status(500).json({ error: error.message });
         }
     } else if (req.method === 'DELETE') {
-        const accessToken = req.headers.authorization;
         const { templateId } = req.body;
 
         const verified_token = verifyToken(req, res);

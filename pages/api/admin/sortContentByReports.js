@@ -7,14 +7,14 @@
     and sorts content.
 
     TODO: Massive implementation assumption (permitted based on Piazza post @192). Assuming that the sorted page displays
-    both sorted blog posts and comment entries. In other words, there ISN'T a seperate sorted page for sorted blog posts ONLY or
-    sorted comments ONLY.
+    the sorted blog posts seperate from the sorted comment entries. In other words, the system admin can only request for sorted blog posts OR
+    sorted comments ONLY at 1 given time.
 */
 //Imports
 import prisma from "../../../utils/db"; 
 import { verifyAdmin} from "../../../utils/verification";
 
-//Handler
+//Handler 
 export default async function handler (req, res){
     // Verify if it's a system admin who is trying to access
     // TODO: Commented out for now since unsure about implementation
@@ -28,13 +28,13 @@ export default async function handler (req, res){
         return res.status(405).json({error: "Method not supported"});
     }
     // Getting GET body content
-    //TODO: Anything else to extract?. 
-    // For now, assyume contentType can be: "BlogPost", "Comment". Not supporting the "Both" option as of now
+    // For now, assume contentType can be: "BlogPost", "Comment". Not supporting the "Both" option as of now
     const {contentType} = req.query;
 
     // Validating req.query entry
     // Check if required fields are defined
     // Using the ? operator in case either variable are undefined
+    // If content type after trimming is still undefined, we are missing info
     if(!contentType?.trim()){
         return res.status(400).json({ error: "Missing required fields: contentType" });
     }
@@ -44,7 +44,6 @@ export default async function handler (req, res){
         return res.status(400).json({ error: "Invalid content type. Must be reporting either a BlogPost or Comment."});
     }
 
-
     // Try statement to retrieve all non-hidden blog posts AND all non-hidden comments
     try {
         // Defining common returned variable
@@ -53,6 +52,7 @@ export default async function handler (req, res){
         const contentSearchCondition = {hidden:false};
 
         // Fetching all non-hidden blog posts
+        //Note: Using Prisma's aggregation feature: https://www.prisma.io/docs/orm/prisma-client/queries/aggregation-grouping-summarizing
         if (contentType === "BlogPost"){
             retrievedContent = await prisma.blogPost.findMany({
                 where: contentSearchCondition,
@@ -66,6 +66,7 @@ export default async function handler (req, res){
         }
 
         // Fetching all non-hidden comments
+        //Note: Using Prisma's aggregation feature: https://www.prisma.io/docs/orm/prisma-client/queries/aggregation-grouping-summarizing
         if (contentType === "Comment"){
             retrievedContent = await prisma.comment.findMany({
                 where: contentSearchCondition,
@@ -78,7 +79,8 @@ export default async function handler (req, res){
         }
 
         // Flatten output JSON object (to make sorting entries easier)
-        // See OneNote notes for sample format
+        // For each returned JSON entry, it makes a new attribte called reportCount, with the number of reports each entries has gained
+        // Developer note: See OneNote notes for sample format
         let formattedContent = retrievedContent.map(({ _count, ...restOfContent}) => ({
             ...restOfContent,
             reportCount: _count.reports

@@ -35,7 +35,9 @@ export default async function handler (req, res){
     
     // Getting GET body content
     // For now, assume contentType can be: "BlogPost", "Comment". Not supporting the "Both" option as of now
-    const {contentType, limit} = req.query;
+    const {contentType} = req.query;
+    let pageNumber = req.query.pageNumber ? parseInt(req.query.pageNumber, 10) : 1;
+    let limitNumber = req.query.limitNumber ? parseInt(req.query.limitNumber, 10) : 10;
 
     // Validating req.query entry
     // Check if required fields are defined
@@ -51,7 +53,7 @@ export default async function handler (req, res){
     }
 
     // Initializing variables for pagination, with the values actually being assigned at a later point
-    let totalBlogPosts, limitAsNumber, pageAsNumber;
+    let totalBlogPosts, totalComments, totalNumberOfPages;
 
     if (contentType === "BlogPost"){
         // Defining the values of page and limit
@@ -59,12 +61,12 @@ export default async function handler (req, res){
         // The default is assumed to be: (<total_num_entries>//10) number of pages, but each page can only have 10 entries
         // An edge case is: If there are no entries, the page count should be 1
         totalBlogPosts = await prisma.blogPost.count();
-        limitAsNumber = limit ? parseInt(limit, 10) : 10;
-        if (totalBlogPosts < 10 || totalBlogPosts < limitAsNumber){
-            pageAsNumber = 1;
+        totalNumberOfPages = Math.ceil(totalBlogPosts / limitNumber);
+        if (pageNumber < 1){
+            pageNumber = 1;
         }
-        else {
-            pageAsNumber = Math.ceil(totalBlogPosts / limitAsNumber);
+        if (pageNumber > totalNumberOfPages){
+            pageNumber = totalNumberOfPages;
         }
     }
 
@@ -74,15 +76,14 @@ export default async function handler (req, res){
         // The default is assumed to be: (<total_num_entries>//10) number of pages, but each page can only have 10 entries
         // An edge case is: If there are no entries, the page count should be 1
         totalComments = await prisma.comment.count();
-        limitAsNumber = limit ? parseInt(limit, 10) : 10;
-        if (totalComments < 10 || totalComments < limitAsNumber){
-            pageAsNumber = 1;
+        totalNumberOfPages = Math.ceil(totalComments / limitNumber);
+        if (pageNumber < 1){
+            pageNumber = 1;
         }
-        else {
-            pageAsNumber = Math.ceil(totalComments / limitAsNumber);
+        if (pageNumber > totalNumberOfPages){
+            pageNumber = totalNumberOfPages;
         }
     }
-
     // Try statement to retrieve all non-hidden blog posts AND all non-hidden comments
     try {
         // Defining common returned variable
@@ -99,7 +100,7 @@ export default async function handler (req, res){
                     _count: {
                         select: { reports: true }
                     }
-                }
+                },
             });
 
         }
@@ -113,7 +114,7 @@ export default async function handler (req, res){
                     _count: {
                         select: { reports: true } 
                     }
-                }
+                },
             });
         }
 
@@ -130,14 +131,12 @@ export default async function handler (req, res){
 
         // Before we return the results, need to define the variables for pagination
         // Pagination logic: Calculate start and end indices
-        const startIndex = (pageAsNumber - 1) * limitAsNumber;
-        const paginatedContent = formattedContent.slice(startIndex, startIndex + limitAsNumber);
-        
-        // // Return the results
-        // return res.status(200).json(formattedContent); //The old, non-paginated version
+        const startIndex = (pageNumber - 1) * limitNumber;
+        const paginatedContent = formattedContent.slice(startIndex, startIndex + limitNumber);
+
         return res.status(200).json(paginatedContent);
     } catch (error) {
         // console.error("Error fetching and/or sorting content:", error); // For debugging purposes
-        return res.status(500).json({ error: "Failed to fetch or sort content" });
+        return res.status(500).json({ message: error, error: "Failed to fetch or sort content" });
     }
 }

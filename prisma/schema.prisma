@@ -119,7 +119,7 @@ model Rating {
 // Tag Schema (since string lists can't be used as the type for tags in CodeTemplate)
 model Tag {
   id      Int         @id @default(autoincrement())
-  name    String
+  name    String      @unique // Make name unique
 
   // Defining Foreign Key relationships
   blogPosts BlogPost[] // One to many relationship (1 tag can belong to more than 1 blog post)

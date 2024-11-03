@@ -15,27 +15,26 @@ import prisma from "../../../utils/db";
 import {verifyToken} from "../../../utils/verifyToken";
 
 //Handler 
-export default async function handler (req, res){
-
+export default async function handler(req, res) {
     // Checking if request type is correct
-    if (req.method !== "GET"){
-        return res.status(405).json({error: "Method not supported"});
+    if (req.method !== "GET") {
+        return res.status(405).json({ error: "Method not supported" });
     }
 
-    //Authenticating user
+    // Authenticating user
     const isUser = verifyToken(req, res);
-    if (!isUser){
+    if (!isUser) {
         return; // JSON response already handled under the case where we have a visitor trying to access
-    } 
-  
-    // Authenticating that we have an admin user
-    if (isUser.role !== "ADMIN"){
-        return res.status(403).json({ error: "Forbidden: Only admins can access this." }); 
     }
-    
+
+    // Authenticating that we have an admin user
+    if (isUser.role !== "ADMIN") {
+        return res.status(403).json({ error: "Forbidden: Only admins can access this." });
+    }
+
     // Getting GET body content
     // For now, assume contentType can be: "BlogPost", "Comment". Not supporting the "Both" option as of now
-    const {contentType} = req.query;
+    const { contentType } = req.query;
     let pageNumber = req.query.pageNumber ? parseInt(req.query.pageNumber, 10) : 1;
     let limitNumber = req.query.limitNumber ? parseInt(req.query.limitNumber, 10) : 10;
 
@@ -43,100 +42,89 @@ export default async function handler (req, res){
     // Check if required fields are defined
     // Using the ? operator in case either variable are undefined
     // If content type after trimming is still undefined, we are missing info
-    if(!contentType?.trim()){
+    if (!contentType?.trim()) {
         return res.status(400).json({ error: "Missing required fields: contentType" });
     }
 
     // Checking if contentType is neither of the intended types
-    if(contentType !== "BlogPost" && contentType !== "Comment"){
-        return res.status(400).json({ error: "Invalid content type. Must be reporting either a BlogPost or Comment."});
+    if (contentType !== "BlogPost" && contentType !== "Comment") {
+        return res.status(400).json({ error: "Invalid content type. Must be reporting either a BlogPost or Comment." });
     }
 
     // Initializing variables for pagination, with the values actually being assigned at a later point
     let totalBlogPosts, totalComments, totalNumberOfPages;
 
-    if (contentType === "BlogPost"){
+    if (contentType === "BlogPost") {
         // Defining the values of page and limit
-        // Key assumption: If the page and/or limit were not given, assign the default values. 
-        // The default is assumed to be: (<total_num_entries>//10) number of pages, but each page can only have 10 entries
-        // An edge case is: If there are no entries, the page count should be 1
         totalBlogPosts = await prisma.blogPost.count();
         totalNumberOfPages = Math.ceil(totalBlogPosts / limitNumber);
-        if (pageNumber < 1){
+        if (pageNumber < 1) {
             pageNumber = 1;
         }
-        if (pageNumber > totalNumberOfPages){
+        if (pageNumber > totalNumberOfPages) {
             pageNumber = totalNumberOfPages;
         }
     }
 
-    if (contentType === "Comment"){
+    if (contentType === "Comment") {
         // Defining the values of page and limit
-        // Key assumption: If the page and/or limit were not given, assign the default values. 
-        // The default is assumed to be: (<total_num_entries>//10) number of pages, but each page can only have 10 entries
-        // An edge case is: If there are no entries, the page count should be 1
         totalComments = await prisma.comment.count();
         totalNumberOfPages = Math.ceil(totalComments / limitNumber);
-        if (pageNumber < 1){
+        if (pageNumber < 1) {
             pageNumber = 1;
         }
-        if (pageNumber > totalNumberOfPages){
+        if (pageNumber > totalNumberOfPages) {
             pageNumber = totalNumberOfPages;
         }
     }
+
     // Try statement to retrieve all non-hidden blog posts AND all non-hidden comments
     try {
         // Defining common returned variable
         let retrievedContent = [];
         // Defining common search condition
-        const contentSearchCondition = {hidden:false};
+        const contentSearchCondition = { hidden: false };
 
         // Fetching all non-hidden blog posts
-        //Note: Using Prisma's aggregation feature: https://www.prisma.io/docs/orm/prisma-client/queries/aggregation-grouping-summarizing
-        if (contentType === "BlogPost"){
+        if (contentType === "BlogPost") {
             retrievedContent = await prisma.blogPost.findMany({
                 where: contentSearchCondition,
                 include: { // creates an additional nested object to store the number of reports a blog post garnered
                     _count: {
                         select: { reports: true }
                     }
-                },
+                }
             });
-
-        }
+        } 
 
         // Fetching all non-hidden comments
-        //Note: Using Prisma's aggregation feature: https://www.prisma.io/docs/orm/prisma-client/queries/aggregation-grouping-summarizing
-        if (contentType === "Comment"){
+        if (contentType === "Comment") {
             retrievedContent = await prisma.comment.findMany({
                 where: contentSearchCondition,
                 include: { // creates an additional nested object to store the number of reports a comment garnered
                     _count: {
-                        select: { reports: true } 
+                        select: { reports: true }
                     }
-                },
+                }
             });
         }
 
         // Flatten output JSON object (to make sorting entries easier)
-        // For each returned JSON entry, it makes a new attribte called reportCount, with the number of reports each entries has gained
-        // Developer note: See OneNote notes for sample format
-        let formattedContent = retrievedContent.map(({ _count, ...restOfContent}) => ({
+        let formattedContent = retrievedContent.map(({ _count, ...restOfContent }) => ({
             ...restOfContent,
             reportCount: _count.reports
         }));
 
         // Sort the entries in descending order from having the most reports to having the least reports 
-        formattedContent.sort((a,b) => (b.reportCount - a.reportCount));
+        formattedContent.sort((a, b) => (b.reportCount - a.reportCount));
 
-        // Before we return the results, need to define the variables for pagination
         // Pagination logic: Calculate start and end indices
         const startIndex = (pageNumber - 1) * limitNumber;
         const paginatedContent = formattedContent.slice(startIndex, startIndex + limitNumber);
 
         return res.status(200).json(paginatedContent);
     } catch (error) {
-        // console.error("Error fetching and/or sorting content:", error); // For debugging purposes
+        // Handle errors here
         return res.status(500).json({ message: error, error: "Failed to fetch or sort content" });
     }
 }

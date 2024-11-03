@@ -8,11 +8,32 @@
 
 // Imports 
 import prisma from "../../../utils/db"; 
-import { verifyUser, verifyAdmin} from "../../../utils/verification";
+// import { verifyUser, verifyAdmin} from "../../../utils/verification"; //TODO: OLD LEGACY CODE FOR AUTHENTICATION
+import {verifyToken} from "../../../utils/verifyToken";
 
-//Handler 
+// // Dummy handler to test auth
+// export default async function handler (req, res){
+
+//     if (req.method !== "POST"){
+//         return res.status(405).json({error: "Method not supported"});
+//     }
+
+//     const isUser = verifyToken(req, res);
+//     if (!isUser){
+//         return; // JSON response already handled under the case where we have a visitor trying to access
+//     } 
+    
+//     else {
+//         return res.status(200).json({"message": "hello world"});
+//     }
+    
+// }
+
+
+// ACTUAL CODE Handler 
 export default async function handler (req, res){
 
+    //TODO: OLD LEGACY CODE FOR AUTHENTICATION
     // // Verify if it's a user (or system admin) who is trying to access
     // // TODO: Commented out for now since unsure about implementation
     // const isUser = verifyUser(req, res);
@@ -26,6 +47,15 @@ export default async function handler (req, res){
         return res.status(405).json({error: "Method not supported"});
     }
 
+    //TODO: New auth code starts here
+    const isUser = verifyToken(req, res);
+        if (!isUser){
+            return; // JSON response already handled under the case where we have a visitor trying to access
+        } 
+
+    // Getting the userId
+    const userId = isUser.id;
+    
     // Getting POST body content
     const{contentType, explanation, blogPostId, commentId} = req.body;
     
@@ -74,7 +104,6 @@ export default async function handler (req, res){
         return res.status(500).json({ error: "Failed to validate content ids" });
     }
 
-
     // Try block #2: 
     // Attempt to create the new report field
     try {
@@ -84,6 +113,9 @@ export default async function handler (req, res){
             data = {
                 contentType,
                 explanation,
+                user: {
+                    connect: { id: userId } // Use the extracted userId here
+                },
                 blogPost: {
                     connect: { id: blogPostId }, // Establish the relationship with the Blog Post instance. 
                 },
@@ -94,6 +126,9 @@ export default async function handler (req, res){
                 contentType,
                 explanation,
                 //Omitting blogPost
+                user: {
+                    connect: { id: userId } // Use the extracted userId here
+                },
                 comment: {
                     connect: { id: commentId }, // Establish the relationship with the Blog Post instance. 
                 },
@@ -106,6 +141,6 @@ export default async function handler (req, res){
         return res.status(201).json(newReport); // 201 status for successful creation
       } catch (error) {
         // console.error("Error creating report:", error); // For debugging purposes
-        return res.status(500).json({ error: "Failed to create report" });
+        return res.status(500).json({error: error, message: "Failed to create report" });
     }
 }

@@ -19,7 +19,11 @@ export default async function handler(req, res) {
         return res.status(405).json({ message: "Must be a GET request." });
     }
 
-    const { title, tags, content } = req.query;
+    const { title, tempTags, content } = req.query;
+
+    if (tempTags && !Array.isArray(tempTags)) {
+        var tags = [tempTags];
+    }
 
     try {
         const filter_settings = {};

@@ -63,6 +63,7 @@ model BlogPost {
   reports   Report[]
   comments  Comment[] // One-to-many relation with comments
   ratings   Rating[]   // Blog post can be rated
+  codeTemplateLinks CodeTemplate[] @relation("BlogPostCodeTemplates")
 }
 
 // Comment schema 
@@ -139,6 +140,7 @@ model CodeTemplate {
   parentId    Int?  // Can be null since it may not have a parent.      
   parent      CodeTemplate?  @relation("ForkedTemplates", fields: [parentId], references: [id])
   children    CodeTemplate[] @relation("ForkedTemplates") // One-to-many relation for forked versions of the template
+  blogPostLinks   BlogPost[]   @relation("BlogPostCodeTemplates")
 }
 
 // Explicit Code-Tag relationship (for now)

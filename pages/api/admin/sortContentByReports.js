@@ -12,21 +12,27 @@
 */
 //Imports
 import prisma from "../../../utils/db"; 
-import { verifyAdmin} from "../../../utils/verification";
+import {verifyToken} from "../../../utils/verifyToken";
 
 //Handler 
 export default async function handler (req, res){
-    // Verify if it's a system admin who is trying to access
-    // TODO: Commented out for now since unsure about implementation
-    // const isAdmin = verifyAdmin(req, res);
-    // if (!isAdmin){
-    //     return; // JSON response already handled under the case where we have a non-admin user visiting
-    // }
 
     // Checking if request type is correct
     if (req.method !== "GET"){
         return res.status(405).json({error: "Method not supported"});
     }
+
+    //Authenticating user
+    const isUser = verifyToken(req, res);
+    if (!isUser){
+        return; // JSON response already handled under the case where we have a visitor trying to access
+    } 
+  
+    // Authenticating that we have an admin user
+    if (isUser.role !== "ADMIN"){
+        return res.status(403).json({ error: "Forbidden: Only admins can access this." }); 
+    }
+    
     // Getting GET body content
     // For now, assume contentType can be: "BlogPost", "Comment". Not supporting the "Both" option as of now
     const {contentType, limit} = req.query;
@@ -127,7 +133,7 @@ export default async function handler (req, res){
         const startIndex = (pageAsNumber - 1) * limitAsNumber;
         const paginatedContent = formattedContent.slice(startIndex, startIndex + limitAsNumber);
         
-        // Return the results
+        // // Return the results
         // return res.status(200).json(formattedContent); //The old, non-paginated version
         return res.status(200).json(paginatedContent);
     } catch (error) {

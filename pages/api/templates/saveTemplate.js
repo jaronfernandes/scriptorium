@@ -1,5 +1,5 @@
-import prisma from '../../../../utils/db';
-import { verifyToken } from '../../../../utils/verifyToken';
+import prisma from '../../../utils/db';
+import { verifyToken } from '../../../utils/verifyToken';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -11,7 +11,7 @@ export default async function handler(req, res) {
      */
     
     const accessToken = req.headers.authorization;
-    const { title, explanation, tags, code } = req.body;
+    const { title, explanation, tags, code, language } = req.body;
 
     const verified_token = verifyToken(req, res);
 
@@ -21,16 +21,22 @@ export default async function handler(req, res) {
 
     const user = await prisma.user.findUnique({
         where: {
-            username: verified_token.username
+            id: verified_token.id
         }
     });
 
+    let loweredLanguage = language.toLowerCase();
+
     if (!user) {
         return res.status(401).json({ error: "User not found" });
+    } else if (loweredLanguage !== "javascript" && loweredLanguage !== "python" 
+        && loweredLanguage !== "java" && loweredLanguage !== "c++" && loweredLanguage !== "c") {
+        return res.status(400).json({ error: "Invalid language" });
     }
 
     try {
         const newTags = []
+        console.log(tags);
 
         for (let tagName of tags) {
             let tag = await prisma.tag.findUnique({
@@ -51,6 +57,7 @@ export default async function handler(req, res) {
                 title,
                 explanation,
                 code,
+                language,
                 authorId: user.id,
                 tags: {
                     connect: newTags.map(tagId => ({ id: tagId }))

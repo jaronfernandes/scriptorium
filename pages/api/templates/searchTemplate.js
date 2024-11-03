@@ -19,7 +19,11 @@ export default async function handler(req, res) {
         return res.status(405).json({ message: "Must be a GET request." });
     }
 
-    const { title, tempTags, content } = req.query;
+    // ChatGPT helped with some of the pagination code (mostly the pagination bits, I did the rest)
+    const { title, tempTags, content, page, pageSize} = req.query;
+    const intPage = parseInt(page) || 1;
+    const intPageSize = parseInt(pageSize) || 10;
+    const skip = (intPage - 1) * intPageSize;
 
     if (tempTags && !Array.isArray(tempTags)) {
         var tags = [tempTags];
@@ -28,17 +32,11 @@ export default async function handler(req, res) {
     try {
         const filter_settings = {};
 
-        console.log("hi");
-        console.log(title, tags, content);
-
         if (title) {
             filter_settings.title = {
                 contains: title,
             }
         }
-
-        console.log("hi2");
-        console.log(filter_settings);
 
         if (tags) {
             filter_settings.tags = {
@@ -50,25 +48,34 @@ export default async function handler(req, res) {
             }
         }
 
-        console.log("hi3");
         // this could mean explanations, but ill assume code for now 
         // since technically code is the content of the code template
+        // also in what world is the "content" of a codetemplate the explanation? :skull:
         if (content) {
             filter_settings.code = {
                 contains: content,
             }
         }
 
-        console.log("hi4");
-        console.log(filter_settings);
-
         const templates = await prisma.codeTemplate.findMany({
-            where: filter_settings
+            where: filter_settings,
+            skip: skip,
+            take: intPageSize,
+            orderBy: { id: 'desc'}
         });
 
-        console.log("hi5");
+        const count = await prisma.codeTemplate.count();
+        const totalPages = Math.ceil(count / intPageSize);
 
-        return res.status(200).json(templates);
+        res.status(200).json({
+            data: templates,
+            meta: {
+              currentPage: intPage,
+              pageSize: intPageSize,
+              totalPages: totalPages,
+              totalCount: count,
+            }
+          });
     } catch (error) {
         return res.status(500).json({ error: error.message });
     }

@@ -20,28 +20,49 @@ export default async function handler(req, res) {
         if (!verified_token) {
             return res.status(401).json({ error: "Unauthorized" });
         }
-
-        if (title) {
-            updates.title = title;
+        if (!templateId) {
+            return res.status(400).json({ error: "Template ID is required." });
         }
-        if (explanation) {
-            updates.explanation = explanation;
+        
+        try {
+            const template = await prisma.codeTemplate.findUnique({
+                where: {
+                    id: parseInt(templateId),
+                }
+            });
+            
+            // check if template exists AND if the user is the author of the template
+            // 404 request because it wasn't found and 403 because they're trying to access an unauthorized resource.
+            if (!template) {
+                return res.status(404).json({ error: "Template not found." });
+            } else if (template.authorId !== verified_token.userId) {
+                return res.status(403).json({ error: "Forbidden Modification." });
+            }
+    
+            if (title) {
+                updates.title = title;
+            }
+            if (explanation) {
+                updates.explanation = explanation;
+            }
+            if (tags) {
+                updates.tags = tags;
+            }
+            if (code) {
+                updates.code = code;
+            }
+    
+            const updatedTemplate = await prisma.codeTemplate.update({
+                where: {
+                    id: parseInt(templateId),
+                },
+                data: updates
+            });
+    
+            res.status(200).json(updatedTemplate);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
         }
-        if (tags) {
-            updates.tags = tags;
-        }
-        if (code) {
-            updates.code = code;
-        }
-
-        const updatedTemplate = await prisma.codeTemplate.update({
-            where: {
-                id: parseInt(templateId),
-            },
-            data: updates
-        });
-
-        res.status(200).json(updatedTemplate);
     } else if (req.method === 'DELETE') {
         const accessToken = req.headers.authorization;
         const { templateId } = req.body;
@@ -52,6 +73,20 @@ export default async function handler(req, res) {
         }
 
         try {
+            const template = await prisma.codeTemplate.findUnique({
+                where: {
+                    id: parseInt(templateId),
+                }
+            });
+
+            // check if template exists AND if the user is the author of the template
+            // 404 request because it wasn't found and 403 because they're trying to access an unauthorized resource.
+            if (!template) {
+                return res.status(404).json({ error: "Template not found." });
+            } else if (template.authorId !== verified_token.userId) {
+                return res.status(403).json({ error: "Forbidden Deletion." });
+            }
+
             await prisma.codeTemplate.delete({
                 where: {
                     id: parseInt(templateId),

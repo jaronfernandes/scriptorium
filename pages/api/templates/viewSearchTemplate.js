@@ -1,5 +1,5 @@
 import prisma from '../../../../utils/db';
-import { verifyToken } from '../../../../utils/auth';
+import { verifyToken } from '../../../../utils/verifyToken';
 
 
 /*
@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     const accessToken = req.headers.authorization;
     const { title, explanation, tags } = req.query;
 
-    const verified_token = verifyToken(accessToken);
+    const verified_token = verifyToken(req, res);
     if (!verified_token) {
         return res.status(401).json({ error: "Unauthorized" });
     }

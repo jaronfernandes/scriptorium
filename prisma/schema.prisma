@@ -84,6 +84,10 @@ model Comment {
   // Defining the one to many relationships
   reports   Report[]  // allowing comments to have multiple reports
   ratings   Rating[]   // FIXME: Defining a new one-to-many relationship. Comments can be rated
+ 
+  parentId  Int?        // Optional field for replies
+  parent    Comment?    @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[]   @relation("CommentReplies")
 }
 
 // Report schema

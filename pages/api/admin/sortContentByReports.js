@@ -29,7 +29,7 @@ export default async function handler (req, res){
     }
     // Getting GET body content
     // For now, assume contentType can be: "BlogPost", "Comment". Not supporting the "Both" option as of now
-    const {contentType} = req.query;
+    const {contentType, limit} = req.query;
 
     // Validating req.query entry
     // Check if required fields are defined
@@ -42,6 +42,24 @@ export default async function handler (req, res){
     // Checking if contentType is neither of the intended types
     if(contentType !== "BlogPost" && contentType !== "Comment"){
         return res.status(400).json({ error: "Invalid content type. Must be reporting either a BlogPost or Comment."});
+    }
+
+    // Initializing variables for pagination, with the values actually being assigned at a later point
+    let totalBlogPosts, limitAsNumber, pageAsNumber;
+
+    if (contentType === "BlogPost"){
+        // Defining the values of page and limit
+        // Key assumption: If the page and/or limit were not given, assign the default values. 
+        // The default is assumed to be: (<total_num_entries>//10) number of pages, but each page can only have 10 entries
+        // An edge case is: If there are no entries, the page count should be 1
+        totalBlogPosts = await prisma.blogPost.count();
+        limitAsNumber = limit ? parseInt(limit, 10) : 10;
+        if (totalBlogPosts < 10 || totalBlogPosts < limitAsNumber){
+            pageAsNumber = 1;
+        }
+        else {
+            pageAsNumber = Math.ceil(totalBlogPosts / limitAsNumber);
+        }
     }
 
     // Try statement to retrieve all non-hidden blog posts AND all non-hidden comments

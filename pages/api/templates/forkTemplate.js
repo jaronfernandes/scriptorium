@@ -1,6 +1,6 @@
 import prisma from '../../../utils/db';
 import { verifyToken } from '../../../utils/verifyToken';
-import { executingCode } from '../../../pages/api/executeCode';
+import { executingCode } from '../executeCode';
 
 /*
 As a visitor, I want to use an existing code template, run or modify it, 
@@ -9,8 +9,10 @@ forked version, so I can build on others’ work. Saving a template is only
 available to authenticated users.
 */
 
-// THIS HAS BEEN TESTED, ALTHOUGH THE RUNNING CODE PART IS IFFY AND PROBABLY SHOULDN'T BE DONE THIS WAY. 
-// PROBABLY LEAVE IT TO NECERON'S USE CASE.
+// THIS HAS BEEN TESTED. BUT IT IS ONLY FORKING. 
+// THE "RUNNING" PART HAPPENS THROUGH NECERON'S CODE EXECUTION ENDPOINT.
+// "MODIFYING" IT, AS A VISITOR (UNAUTHENTICATED), HAPPENS ON THE FRONTEND;
+// NO CHANGES ARE REFLECTED ON THE BACKEND DUE TO THE NATURE OF THE VISITOR.
 
 /**
  * 
@@ -19,24 +21,8 @@ available to authenticated users.
  * @returns 
  */
 export default async function handler(req, res) {
-    if (req.method === 'GET') { // this is gonna be for viewing a template
-        const { modifiedCode, stdin, language } = req.query;
-
-        // NOTE: The "visitor can run and modify a code template" - THE MODIFYING BIT IS FRONT-END.
-        // DO NOT UPDATE THE EXISTING CODE TEMPLATE SINCE THEY ARE UNAUTHENTICATED. MODIFYING IS ONLY FOR THE VISITOR'S VIEW.
-        // If the visitor wants to save the modified code, they can fork the template.
-        // But we handle running the code through the code execution api helper function.
-        
-        const result = executingCode(modifiedCode, language, stdin);
-
-        // Handle the response based on the helper function's result
-        if (result.error) {
-            return res.status(400).json({ error: result.error });
-        }
-        
-        return res.status(200).json(result.output);
-    } else if (req.method === "POST") { // this is gonna be for saving (forking) a template
-        const accessToken = req.headers.authorization;
+    // NOTE: 
+    if (req.method === "POST") { // this is gonna be for saving (forking) a template
         const { title, explanation, language, tags, code, templateId } = req.body;
 
         const verified_token = verifyToken(req, res);
@@ -44,11 +30,13 @@ export default async function handler(req, res) {
         if (!verified_token) {
             return res.status(401).json({ error: "Invalid token" });
         }
+
+        // language check:
+        if (!language || !["javascript", "python", "java", "c++", "c"].includes(language.toLowerCase())) {
+            return res.status(400).json({ error: "Valid language is required." });
+        }
         
         try {
-            // TODO: delete this comment after testing
-            // could just do verified_token.userId instead of querying the user, but i wanna see if this alternative
-            // works first try or not.
             const user = await prisma.user.findUnique({
                 where: {
                     id: verified_token.id
@@ -85,7 +73,7 @@ export default async function handler(req, res) {
                     explanation,
                     code,
                     userId: user.id,
-                    language,
+                    language: language.toLowerCase(),
                     tags: {
                         connect: newTags.map(tagId => ({ id: tagId }))
                     },

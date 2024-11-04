@@ -14,6 +14,8 @@
 
         - Did not put this in a nested folder (eg: user or admin) because this route is accessible to all (accesible to the lowest level, visitor)
 
+    Used ChatGPT as brainstorming inspiration and for helped to structure the code + error handling
+
 */
 
 //Imports

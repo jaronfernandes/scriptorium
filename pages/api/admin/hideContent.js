@@ -6,6 +6,10 @@
 
     Overall purpose of the file: Creates a POST endpoint that takes user info fron req.body and 
     makes a piece of content (either a report or a comment) hidden
+
+    Citation:
+
+    Used ChatGPT as brainstorming inspiration and for helped to structure the code + error handling
 */
 
 // Imports 

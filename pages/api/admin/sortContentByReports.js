@@ -9,6 +9,8 @@
     TODO: Massive implementation assumption (permitted based on Piazza post @192). Assuming that the sorted page displays
     the sorted blog posts seperate from the sorted comment entries. In other words, the system admin can only request for sorted blog posts OR
     sorted comments ONLY at 1 given time.
+
+    Used ChatGPT as brainstorming inspiration and for helped to structure the code + error handling
 */
 //Imports
 import prisma from "../../../utils/db"; 

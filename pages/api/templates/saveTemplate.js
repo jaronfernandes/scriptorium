@@ -63,7 +63,7 @@ export default async function handler(req, res) {
               title,
               explanation,
               code,
-              language,
+              language: loweredLanguage,
               userId: user.id,
               tags: {
                 connect: newTags.map(tag => ({ id: tag.id })),

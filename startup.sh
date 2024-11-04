@@ -1,5 +1,4 @@
 #!/bin/bash
 
+npm install
 node createAdmin.js
-
-npm run dev

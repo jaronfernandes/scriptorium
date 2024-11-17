@@ -22,8 +22,13 @@ export default async function executeCodeHelper(inputCode, language, stdin) {
         // Execute the input command
         let { stdout, stderr } = await execAsync(codeCommand);
 
-        // Construct the result object
-        let result = { output: stdout}; // Include warnings in the result
+        // Construct the result object (initialize as empty object)
+        let result = {}
+
+        // Include stdout if included
+        if (stdout) {
+            result.output = stdout;
+        }
 
         // Handle any warnings if any
         if (warnings){
@@ -39,7 +44,7 @@ export default async function executeCodeHelper(inputCode, language, stdin) {
     
     catch (error) {
         // Handle any errors that occur during execution
-        return { output: null, error: error.message };
+        return {error: error.message };
     }
 
 }

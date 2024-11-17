@@ -68,7 +68,7 @@ function regexCleaningInput(language, inputString){
     //FIXME: One massive assumption: We assume all lines of code are escaped by a \n, therefore the regex does NOT escape them
     //FIXME: Likely need to work on further refining the regex
     
-    if (language === "python" || language === "javascript" || language === "ruby"){
+    if (language === "python" || language === "javascript"){
         let cleanedInputString = inputString
         ?.replace(/\\/g, '\\\\') // Escape backslashes
         ?.replace(/"/g, '\\"') // Escape double quotes
@@ -81,6 +81,14 @@ function regexCleaningInput(language, inputString){
         let cleanedInputString = inputString
         ?.replace(/'/g, "\\'") // Escape single quotes
         ?.trim(); // Trim any leading or trailing whitespace
+        return cleanedInputString;
+    }
+
+    else if (language === "ruby") {
+        let cleanedInputString = inputString
+            .replace(/\\/g, '\\\\')   // Escape backslashes for JSON
+            .replace(/"/g, '\\"')     // Escape double quotes for JSON
+            .trim();                 // Trim any leading/trailing whitespace
         return cleanedInputString;
     }
 }

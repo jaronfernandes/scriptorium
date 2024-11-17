@@ -91,6 +91,15 @@ function regexCleaningInput(language, inputString){
             .trim();                 // Trim any leading/trailing whitespace
         return cleanedInputString;
     }
+
+    else if (language === "r"){
+        let cleanedInputString = inputString
+        .replace(/\\/g, '\\\\')   // Escape backslashes
+        .replace(/"/g, '\\"')      // Escape double quotes
+        .replace(/\$/g, '\\$')        // Escape dollar signs
+        .trim();                  // Trim leading/trailing whitespace
+        return cleanedInputString
+    }
 }
 
 /*
@@ -231,6 +240,12 @@ async function compileCode (inputCode, language, stdin){
         // Ruby is an interpreted language (like Python, JS), so no need to compile
         // Using the -w flag to enable warnings
         codeCommand = `echo "${cleanedStdin}" | ruby -w -e "${cleanedInputCode}"`;
+    }
+    else if (language === "r") {
+        // Ruby is an interpreted language (like Python, JS), so no need to compile
+        // Using Rscript to execute code
+        // -e flag allows execution of R code passed as a string
+        codeCommand = `echo "${cleanedStdin}" | Rscript -e "${cleanedInputCode}"`;
     }
     // Note: At least 1 of these else branches should be reached because the language validity check...
     //... is already done in method executingCode under file: executeCode.js

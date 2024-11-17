@@ -68,7 +68,7 @@ function regexCleaningInput(language, inputString){
     //FIXME: One massive assumption: We assume all lines of code are escaped by a \n, therefore the regex does NOT escape them
     //FIXME: Likely need to work on further refining the regex
     
-    if (language === "python" || language === "javascript"){
+    if (language === "python" || language === "javascript" || language === "ruby"){
         let cleanedInputString = inputString
         ?.replace(/\\/g, '\\\\') // Escape backslashes
         ?.replace(/"/g, '\\"') // Escape double quotes
@@ -218,6 +218,11 @@ async function compileCode (inputCode, language, stdin){
         warnings = stderr; // Store warnings from compilation
         // Execute the code found in the temporary file + with user args
         codeCommand = `echo "${cleanedStdin}" | ./${tempCppFileName}`;
+    }
+    else if (language === "ruby") {
+        // Ruby is an interpreted language (like Python, JS), so no need to compile
+        // Using the -w flag to enable warnings
+        codeCommand = `echo "${cleanedStdin}" | ruby -w -e "${cleanedInputCode}"`;
     }
     // Note: At least 1 of these else branches should be reached because the language validity check...
     //... is already done in method executingCode under file: executeCode.js
